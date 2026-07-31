@@ -27,6 +27,7 @@ import ast
 import json
 import pathlib
 import re
+import subprocess
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -159,8 +160,34 @@ def check_names() -> None:
             err(f"{path.relative_to(ROOT)}: filename is not kebab-case")
 
 
+def git_modes() -> dict:
+    """Path -> git index mode ('100755' executable, '100644' not).
+
+    Git's recorded mode is the portable answer, and the one that matters: it is
+    what lands in a consumer's checkout. The filesystem bit cannot be used —
+    NTFS has no POSIX exec bit, so `st_mode & 0o111` is false for every file on
+    a Windows runner and the check fails there for no real reason. Empty dict
+    when git is unavailable, which degrades to the filesystem check below.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "ls-files", "-s"], cwd=ROOT, capture_output=True, text=True, timeout=15
+        )
+    except (OSError, subprocess.SubprocessError):
+        return {}
+    if out.returncode != 0:
+        return {}
+    modes = {}
+    for line in out.stdout.splitlines():
+        meta, _, path = line.partition("\t")
+        parts = meta.split()
+        if parts and path:
+            modes[path] = parts[0]
+    return modes
+
+
 def check_bin() -> None:
-    """Entry points must be runnable: executable bit plus a shebang.
+    """Entry points must be runnable: executable mode plus a shebang.
 
     A bin/ script without the executable bit installs fine and then fails the
     first time an agent calls it by name — the failure mode this catches.
@@ -169,11 +196,23 @@ def check_bin() -> None:
     if not bin_dir.is_dir():
         return
     entries = [p for p in sorted(bin_dir.iterdir()) if p.is_file() and not p.name.startswith(".")]
+    modes = git_modes()
     for path in entries:
         if LIB_RE.match(path.name):
             continue  # imported, never executed directly
-        if not path.stat().st_mode & 0o111:
-            err(f"bin/{path.name}: not executable (chmod +x)")
+        rel = path.relative_to(ROOT).as_posix()
+        if rel in modes:
+            if modes[rel] != "100755":
+                err(
+                    f"bin/{path.name}: git mode is {modes[rel]}, not 100755 — "
+                    f"run `git update-index --chmod=+x {rel}` (chmod +x alone does "
+                    f"not fix an already-tracked file)"
+                )
+        elif not path.stat().st_mode & 0o111:
+            # Untracked, or no git available: fall back to the filesystem bit.
+            # Skipped on Windows, where NTFS has no POSIX exec bit to read.
+            if not sys.platform.startswith("win"):
+                err(f"bin/{path.name}: not executable (chmod +x)")
         first = path.read_text(encoding="utf-8").splitlines()[:1]
         if not first or not first[0].startswith("#!"):
             err(f"bin/{path.name}: missing shebang")
