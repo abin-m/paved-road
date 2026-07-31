@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/secrets-guard.py"
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/secrets-guard.py\""
           }
         ]
       },
@@ -16,15 +16,15 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/secrets-guard.py"
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/secrets-guard.py\""
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/main-guard.py"
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/main-guard.py\""
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/prod-guard.py"
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/prod-guard.py\""
           }
         ]
       }
