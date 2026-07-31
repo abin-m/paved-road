@@ -1,0 +1,60 @@
+# Release — cut a version consumers can pull.
+#
+# Flow (see the release-flow skill): bump `version` in
+# paved-road-core/.claude-plugin/plugin.json, merge to main, then:
+#
+#   git tag -a v0.2.0 -m "release: v0.2.0" && git push origin v0.2.0
+#
+# The tag triggers this. The manifest version and the tag must agree — the
+# manifest is what `/plugin` shows installed, so a tag that disagrees with it
+# makes "which version do I have?" unanswerable.
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write # required to create the GitHub Release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # release notes need the full history
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.9" # the advertised floor
+
+      - name: Verify tag matches the plugin manifest
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME#v}"
+          manifest=$(python -c "import json;print(json.load(open('paved-road-core/.claude-plugin/plugin.json'))['version'])")
+          echo "tag=$tag manifest=$manifest"
+          if [ "$tag" != "$manifest" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match plugin.json version $manifest — bump the manifest and re-tag"
+            exit 1
+          fi
+
+      - name: Lint pack
+        run: python tools/lint.py
+
+      - name: Guard tests
+        run: python paved-road-core/tests/guards.test.py
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            --verify-tag
+        # Private repo: the release is visible only to people with repo access,
+        # which is the same set that can install the marketplace. No artifact is
+        # attached on purpose — consumers install from the git ref, not a tarball.

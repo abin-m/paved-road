@@ -1,0 +1,63 @@
+# CI — the gate. Everything here also runs locally via:
+#   python3 tools/lint.py && python3 paved-road-core/tests/guards.test.py
+#
+# The matrix is the point: the guards ship to whatever machine installs the
+# plugin, so they are proven on macOS, Linux and Windows, and on the oldest
+# Python the README promises (3.9) as well as current.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read # least privilege; the release workflow widens it for itself
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{ matrix.os }} / py${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.9", "3.13"]
+    steps:
+      # Pin by SHA for a stricter posture (see secure-defaults):
+      #   gh api repos/actions/checkout/git/ref/tags/v5 --jq .object.sha
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Lint pack (manifests, frontmatter, hook wiring, python floor)
+        run: python tools/lint.py
+
+      - name: Guard tests
+        run: python paved-road-core/tests/guards.test.py
+
+  hook-invocation:
+    # hooks.json invokes the guards as `python3 <path>`. If that interpreter
+    # name is not resolvable, every guard silently fails open — so assert the
+    # exact command line the harness will run, on each POSIX platform.
+    name: hook command line (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v5
+      - name: python3 resolves and the guard blocks a secret read
+        run: |
+          set -euo pipefail
+          echo '{"tool_name":"Read","tool_input":{"file_path":".env"}}' \
+            | python3 "paved-road-core/hooks/secrets-guard.py" && rc=0 || rc=$?
+          test "$rc" -eq 2 || { echo "expected exit 2, got $rc"; exit 1; }
+          echo "guard blocked as expected (exit 2)"
