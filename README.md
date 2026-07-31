@@ -63,6 +63,12 @@ Windows-specific behaviour that is already handled: the guards normalise `\` to 
 
 | Component | What it does |
 |---|---|
+| `/paved-road-core:planning-flow` | The work loop: `board` → claim → branch → PR → close, with issues as the record. Uses the tools below |
+| `/paved-road-core:token-setup` | Mint a GitHub token, store it in the OS keychain, verify it — and what each failure code actually means |
+| `gh-token` script | Resolves a token **at use time**: OS keychain → `GH_TOKEN`/`GITHUB_TOKEN` → `gh auth token`. `--store` hands off to the OS prompt; `--check` gives a one-line verdict with scopes and expiry |
+| `gh-issue` script | `list` / `show` / `create` / `comment` / `close` / `label` |
+| `gh-pr` script | `open` (with `--closes N`, `--draft`, `--reviewer`) / `list` / `status` (checks, reviews, mergeability; non-zero when a check fails) / `ready` / `merge` |
+| `board` script | Fetches open issues and PRs across the repos in `board.config.json` and writes one compact `board.md` — Ready / In progress / Blocked / Needs triage / Open PRs, plus a deadline countdown |
 | `/paved-road-core:conventions` | Naming, repo layout, and where knowledge belongs — hook vs skill vs `CLAUDE.md` vs memory |
 | `/paved-road-core:session-close` | End-of-session hygiene: no unpushed work, no stranded branches (squash-safe, verified by content), work parked with a note |
 | `/paved-road-core:iac-change` | Terraform / Ansible / k8s / Helm discipline: plan → read the blast radius → state the rollback → apply the saved plan → verify the system |
@@ -76,6 +82,42 @@ Windows-specific behaviour that is already handled: the guards normalise `\` to 
 | `secrets-guard` hook | Blocks reads of `.env`, `*.tfvars`, kubeconfigs, private keys, `.ssh/`, `secrets/`, `creds/` — via the file tools *and* via `cat`/`grep` in Bash |
 | `main-guard` hook | Blocks commits on `main`/`master` and bulk staging (`git add -A`, `git commit -a`) |
 | `prod-guard` hook | Blocks mutating `kubectl`/`helm`/`terraform apply`/`ansible`/`ssh` against anything named prod/staging. Read-only diagnostics always pass; deliberate action is re-run as `PROD_OK=1 <cmd>`, so the authorisation is on the record |
+
+## Tokens
+
+The GitHub tools read a token **at use time** and never store one. Set it up once:
+
+```sh
+gh-token --store     # OS prompt takes the secret; nothing enters shell history
+gh-token --check     # ok: token from keychain, user <you>, scopes [repo], expires <date>
+```
+
+Then always call by command substitution, so the value goes to the *shell* and never into an agent's context:
+
+```sh
+GH_TOKEN=$(gh-token) gh-issue list
+GH_TOKEN=$(gh-token) gh-pr status
+GH_TOKEN=$(gh-token) board
+```
+
+Scope: a classic token with `repo` (private repos, issue creation, PR merges). Storage is macOS Keychain (`security`) or Linux libsecret (`secret-tool`); Windows has no keychain backend, so it falls through to `GH_TOKEN` or the `gh` CLI. Full walkthrough and failure table: `/paved-road-core:token-setup`.
+
+**Permissions.** The named scripts exist so a static allowlist has something to target — raw `curl` cannot be allowlisted safely, because it posts anywhere. Starter `.claude/settings.json`, reversible writes only:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh-token:*)", "Bash(board:*)",
+      "Bash(gh-issue list:*)", "Bash(gh-issue show:*)", "Bash(gh-issue comment:*)",
+      "Bash(gh-issue create:*)", "Bash(gh-issue label:*)",
+      "Bash(gh-pr open:*)", "Bash(gh-pr list:*)", "Bash(gh-pr status:*)"
+    ]
+  }
+}
+```
+
+`gh-pr merge` and `gh-issue close` are left out deliberately: merging and closing are human gates, so their prompts stay.
 
 ## Design notes
 

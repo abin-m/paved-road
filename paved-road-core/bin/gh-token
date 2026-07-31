@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+"""gh-token — resolve a GitHub token from the OS keychain at use time.
+
+    GH_TOKEN=$(gh-token) gh-issue list     # the intended call shape
+    gh-token --check                       # one-line verdict: who, scopes, expiry
+    gh-token --store                       # interactive: store a token in the keychain
+
+The token is written to stdout so a *shell* can capture it by command
+substitution — that keeps the secret out of the agent's context. Never run
+plain `gh-token` and paste the output anywhere.
+"""
+
+import os
+import subprocess
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import gh_lib  # noqa: E402
+
+USAGE = __doc__
+
+
+def store():
+    """Hand off to the OS tool so the secret is typed into *its* prompt."""
+    if sys.platform == "darwin":
+        cmd = [
+            "security", "add-generic-password", "-U",
+            "-s", gh_lib.KEYCHAIN_SERVICE, "-a", gh_lib.KEYCHAIN_ACCOUNT, "-w",
+        ]
+    elif sys.platform.startswith("linux"):
+        cmd = [
+            "secret-tool", "store", "--label=GitHub API token",
+            "service", gh_lib.KEYCHAIN_SERVICE, "account", gh_lib.KEYCHAIN_ACCOUNT,
+        ]
+    else:
+        gh_lib.die(
+            "no keychain backend on this platform. Set GH_TOKEN in your shell "
+            "profile, or use `gh auth login` and let gh hold the token."
+        )
+    print(
+        "Paste the token at the prompt (it is not echoed, and never touches "
+        "shell history or this transcript).",
+        file=sys.stderr,
+    )
+    raise SystemExit(subprocess.call(cmd))
+
+
+def check():
+    token, source = gh_lib.resolve_token()
+    if not token:
+        print(
+            "no token found — checked keychain, GH_TOKEN/GITHUB_TOKEN, gh CLI.\n"
+            "fix: gh-token --store   (or export GH_TOKEN, or gh auth login)"
+        )
+        return 1
+
+    import urllib.request
+
+    req = urllib.request.Request(gh_lib.API + "/user", method="GET")
+    req.add_header("Authorization", f"Bearer {token}")
+    req.add_header("Accept", "application/vnd.github+json")
+    try:
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            import json
+
+            user = json.loads(resp.read()).get("login", "?")
+            scopes = resp.headers.get("x-oauth-scopes", "")
+            expiry = resp.headers.get("github-authentication-token-expiration", "")
+    except Exception as exc:  # noqa: BLE001 — the verdict must survive any failure
+        print(f"token from {source} is NOT working: {exc}")
+        return 1
+
+    scope_note = scopes if scopes else "fine-grained (per-repo permissions)"
+    verdict = f"ok: token from {source}, user {user}, scopes [{scope_note}]"
+    if expiry:
+        verdict += f", expires {expiry}"
+    print(verdict)
+
+    if scopes and "repo" not in scopes:
+        print(
+            "warn: no `repo` scope — reads of public repos work, but private "
+            "repos, issue creation and PR merges will 403."
+        )
+    return 0
+
+
+def main(argv):
+    if len(argv) > 1 and argv[1] in ("-h", "--help"):
+        print(USAGE)
+        return 0
+    if len(argv) > 1 and argv[1] == "--store":
+        return store()
+    if len(argv) > 1 and argv[1] == "--check":
+        return check()
+    if len(argv) > 1:
+        gh_lib.die(f"unknown argument {argv[1]!r}. See --help.")
+
+    token, _ = gh_lib.resolve_token()
+    if not token:
+        gh_lib.die("no token found. Run `gh-token --check` for the fix.")
+    sys.stdout.write(token + "\n")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

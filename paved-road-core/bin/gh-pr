@@ -1,0 +1,216 @@
+#!/usr/bin/env python3
+"""gh-pr — pull-request read/write against GitHub, token from the keychain.
+
+    GH_TOKEN=$(gh-token) gh-pr open --title T [--body B] [--body-file F]
+                                    [--base main] [--head <branch>] [--draft]
+                                    [--closes N]... [--reviewer U]...
+    GH_TOKEN=$(gh-token) gh-pr list [--state open|closed|all]
+    GH_TOKEN=$(gh-token) gh-pr status [<number>]     # checks + mergeability
+    GH_TOKEN=$(gh-token) gh-pr ready <number>        # draft -> ready for review
+    GH_TOKEN=$(gh-token) gh-pr merge <number> [--squash|--merge|--rebase] [--delete-branch]
+
+Common: --repo owner/name (default: the `origin` remote of the cwd).
+
+`merge` is deliberately a separate verb from everything else: merging the
+default branch is a human gate, so allowlist `gh-pr open` and `gh-pr status`
+and leave `gh-pr merge` prompting.
+"""
+
+import argparse
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import gh_lib  # noqa: E402
+
+
+def body_text(args):
+    if getattr(args, "body_file", None):
+        try:
+            with open(args.body_file, encoding="utf-8") as fh:
+                return fh.read()
+        except OSError as exc:
+            gh_lib.die(f"cannot read --body-file: {exc}")
+    return getattr(args, "body", None)
+
+
+def cmd_open(args, token, repo):
+    head = args.head or gh_lib.current_branch()
+    if not head:
+        gh_lib.die("cannot determine the head branch — pass --head")
+    base = args.base or gh_lib.default_branch(repo, token)
+    if head == base:
+        gh_lib.die(f"head and base are both {base!r} — create a topic branch first")
+
+    body = body_text(args) or ""
+    if args.closes:
+        closes = " ".join(f"Closes #{n}" for n in args.closes)
+        body = f"{body}\n\n{closes}".strip()
+
+    pr = gh_lib.api(
+        "POST",
+        f"/repos/{repo}/pulls",
+        token,
+        body={
+            "title": args.title,
+            "head": head,
+            "base": base,
+            "body": body,
+            "draft": bool(args.draft),
+        },
+    )
+    print(f"opened #{pr['number']}: {pr['html_url']}")
+
+    if args.reviewer:
+        gh_lib.api(
+            "POST",
+            f"/repos/{repo}/pulls/{pr['number']}/requested_reviewers",
+            token,
+            body={"reviewers": args.reviewer},
+        )
+        print(f"review requested from: {', '.join(args.reviewer)}")
+    return 0
+
+
+def cmd_list(args, token, repo):
+    prs = gh_lib.paginate(f"/repos/{repo}/pulls", token, params={"state": args.state})
+    if not prs:
+        print("no pull requests match")
+        return 0
+    for pr in prs:
+        draft = " [draft]" if pr.get("draft") else ""
+        print(f"#{pr['number']:<5} {pr['state']:<6} {pr['head']['ref']:<28} {pr['title']}{draft}")
+    return 0
+
+
+def cmd_status(args, token, repo):
+    number = args.number
+    if not number:
+        branch = gh_lib.current_branch()
+        owner = repo.split("/")[0]
+        matches = gh_lib.api(
+            "GET", f"/repos/{repo}/pulls", token, params={"head": f"{owner}:{branch}", "state": "open"}
+        )
+        if not matches:
+            gh_lib.die(f"no open PR for branch {branch!r} — pass a number, or open one")
+        number = matches[0]["number"]
+
+    pr = gh_lib.api("GET", f"/repos/{repo}/pulls/{number}", token)
+    print(f"#{pr['number']} {pr['title']}")
+    print(f"  {pr['head']['ref']} -> {pr['base']['ref']}   state={pr['state']}"
+          f"{' draft' if pr.get('draft') else ''}")
+    print(f"  mergeable={pr.get('mergeable')}  mergeable_state={pr.get('mergeable_state')}")
+    print(f"  {pr['html_url']}")
+
+    checks = gh_lib.api("GET", f"/repos/{repo}/commits/{pr['head']['sha']}/check-runs", token)
+    runs = checks.get("check_runs", [])
+    if runs:
+        print("  checks:")
+        for run in runs:
+            verdict = run.get("conclusion") or run.get("status")
+            print(f"    {verdict:<12} {run['name']}")
+        failed = [r["name"] for r in runs if r.get("conclusion") in ("failure", "timed_out")]
+        if failed:
+            print(f"  FAILING: {', '.join(failed)}")
+            return 1
+        if any(r.get("status") != "completed" for r in runs):
+            print("  (checks still running)")
+    else:
+        print("  checks: none reported yet")
+
+    reviews = gh_lib.paginate(f"/repos/{repo}/pulls/{number}/reviews", token)
+    if reviews:
+        latest = {}
+        for review in reviews:
+            latest[review["user"]["login"]] = review["state"]
+        print("  reviews: " + ", ".join(f"{u}={s}" for u, s in latest.items()))
+    return 0
+
+
+def cmd_ready(args, token, repo):
+    # Marking a PR ready is a GraphQL-only mutation; the REST PATCH cannot do it.
+    pr = gh_lib.api("GET", f"/repos/{repo}/pulls/{args.number}", token)
+    query = """mutation($id:ID!){ markPullRequestReadyForReview(input:{pullRequestId:$id})
+               { pullRequest { number isDraft } } }"""
+    result = gh_lib.api(
+        "POST", "/graphql", token, body={"query": query, "variables": {"id": pr["node_id"]}}
+    )
+    if result.get("errors"):
+        gh_lib.die(f"could not mark ready: {result['errors']}")
+    print(f"#{args.number} is ready for review")
+    return 0
+
+
+def cmd_merge(args, token, repo):
+    method = "squash"
+    if args.merge:
+        method = "merge"
+    elif args.rebase:
+        method = "rebase"
+
+    pr = gh_lib.api("GET", f"/repos/{repo}/pulls/{args.number}", token)
+    result = gh_lib.api(
+        "PUT",
+        f"/repos/{repo}/pulls/{args.number}/merge",
+        token,
+        body={"merge_method": method},
+    )
+    print(f"merged #{args.number} ({method}): {result.get('sha', '')}")
+
+    if args.delete_branch:
+        ref = pr["head"]["ref"]
+        gh_lib.api("DELETE", f"/repos/{repo}/git/refs/heads/{ref}", token)
+        print(f"deleted remote branch {ref}")
+    return 0
+
+
+def build_parser():
+    parser = argparse.ArgumentParser(
+        prog="gh-pr", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument("--repo", help="owner/name (default: origin remote)")
+    sub = parser.add_subparsers(dest="cmd", required=True)
+
+    p = sub.add_parser("open")
+    p.add_argument("--title", required=True)
+    p.add_argument("--body")
+    p.add_argument("--body-file", dest="body_file")
+    p.add_argument("--base")
+    p.add_argument("--head")
+    p.add_argument("--draft", action="store_true")
+    p.add_argument("--closes", action="append", help="issue number this PR closes")
+    p.add_argument("--reviewer", action="append")
+    p.set_defaults(func=cmd_open)
+
+    p = sub.add_parser("list")
+    p.add_argument("--state", default="open", choices=["open", "closed", "all"])
+    p.set_defaults(func=cmd_list)
+
+    p = sub.add_parser("status")
+    p.add_argument("number", nargs="?")
+    p.set_defaults(func=cmd_status)
+
+    p = sub.add_parser("ready")
+    p.add_argument("number")
+    p.set_defaults(func=cmd_ready)
+
+    p = sub.add_parser("merge")
+    p.add_argument("number")
+    p.add_argument("--squash", action="store_true", help="default")
+    p.add_argument("--merge", action="store_true")
+    p.add_argument("--rebase", action="store_true")
+    p.add_argument("--delete-branch", dest="delete_branch", action="store_true")
+    p.set_defaults(func=cmd_merge)
+
+    return parser
+
+
+def main(argv=None):
+    args = build_parser().parse_args(argv)
+    token = gh_lib.require_token()
+    repo = gh_lib.current_repo(args.repo)
+    return args.func(args, token, repo)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
