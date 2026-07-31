@@ -1,0 +1,182 @@
+#!/usr/bin/env python3
+"""board — turn open GitHub issues and PRs into one compact planning file.
+
+    GH_TOKEN=$(gh-token) board [path/to/board.config.json]
+
+Writes `board.md` (or whatever `output` says). The point is cost: an agent
+orients from one cheap file read instead of N API calls, and a human sees the
+whole queue on one screen.
+
+Config (`board.config.json`, resolved relative to the cwd):
+
+    {
+      "repos": ["abin-m/paved-road", "abin-m/homelab-infra"],
+      "output": "board.md",
+      "blocked_label": "blocked",
+      "triage_label": "needs-triage",
+      "deadlines": [{"label": "v1.0", "date": "2026-09-01"}]
+    }
+
+States are *derived*, because GitHub has no native workflow state:
+  Ready        open, unassigned, not blocked, not awaiting triage
+  In progress  assigned (or has a linked open PR)
+  Blocked      carries the blocked label
+  Needs triage carries the triage label, or has no labels at all
+"""
+
+import datetime
+import json
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import gh_lib  # noqa: E402
+
+DEFAULTS = {
+    "repos": [],
+    "output": "board.md",
+    "blocked_label": "blocked",
+    "triage_label": "needs-triage",
+    "deadlines": [],
+}
+
+
+def load_config(path):
+    if not os.path.exists(path):
+        gh_lib.die(
+            f"no config at {path}. Create board.config.json — see `board --help` "
+            f"for the schema."
+        )
+    try:
+        with open(path, encoding="utf-8") as fh:
+            user = json.load(fh)
+    except (OSError, json.JSONDecodeError) as exc:
+        gh_lib.die(f"cannot read {path}: {exc}")
+    config = dict(DEFAULTS)
+    config.update(user)
+    if not config["repos"]:
+        gh_lib.die(f"{path} lists no repos")
+    return config
+
+
+def classify(issue, config):
+    labels = {lbl["name"].lower() for lbl in issue.get("labels", [])}
+    if config["blocked_label"].lower() in labels:
+        return "blocked"
+    if config["triage_label"].lower() in labels or not labels:
+        return "triage"
+    if issue.get("assignee"):
+        return "in_progress"
+    return "ready"
+
+
+def collect(repo, token):
+    issues = gh_lib.paginate(f"/repos/{repo}/issues", token, params={"state": "open"})
+    return {
+        "issues": [i for i in issues if "pull_request" not in i],
+        "prs": gh_lib.paginate(f"/repos/{repo}/pulls", token, params={"state": "open"}),
+    }
+
+
+def countdown(deadlines, today=None):
+    today = today or datetime.date.today()
+    lines = []
+    for entry in deadlines:
+        try:
+            date = datetime.date.fromisoformat(entry["date"])
+        except (KeyError, ValueError):
+            continue
+        days = (date - today).days
+        state = f"{days}d left" if days >= 0 else f"{abs(days)}d OVERDUE"
+        lines.append(f"- **{entry.get('label', 'deadline')}** — {entry['date']} ({state})")
+    return lines
+
+
+def render(config, data, now=None):
+    """Pure: config + fetched data -> the board.md text. Tested without network."""
+    now = now or datetime.datetime.now(datetime.timezone.utc)
+    buckets = {"ready": [], "in_progress": [], "blocked": [], "triage": []}
+    prs = []
+
+    for repo, payload in data.items():
+        for issue in payload["issues"]:
+            buckets[classify(issue, config)].append((repo, issue))
+        for pr in payload["prs"]:
+            prs.append((repo, pr))
+
+    out = ["# Board", "", f"_generated {now.strftime('%Y-%m-%d %H:%M UTC')} — do not edit by hand_", ""]
+
+    dl = countdown(config.get("deadlines", []), now.date())
+    if dl:
+        out += ["## Deadlines", ""] + dl + [""]
+
+    def section(title, items, fmt):
+        out.append(f"## {title} ({len(items)})")
+        out.append("")
+        if not items:
+            out.append("_none_")
+        else:
+            out.extend(fmt(repo, obj) for repo, obj in items)
+        out.append("")
+
+    def issue_line(repo, issue):
+        labels = ",".join(lbl["name"] for lbl in issue.get("labels", []))
+        suffix = f"  `{labels}`" if labels else ""
+        return f"- **{repo}#{issue['number']}** {issue['title']}{suffix}"
+
+    def wip_line(repo, issue):
+        who = (issue.get("assignee") or {}).get("login", "?")
+        return f"- **{repo}#{issue['number']}** {issue['title']} — @{who}"
+
+    def pr_line(repo, pr):
+        draft = " _(draft)_" if pr.get("draft") else ""
+        return (
+            f"- **{repo}#{pr['number']}** {pr['title']}{draft} — "
+            f"`{pr['head']['ref']}` → `{pr['base']['ref']}`"
+        )
+
+    section("Ready", buckets["ready"], issue_line)
+    section("In progress", buckets["in_progress"], wip_line)
+    section("Blocked", buckets["blocked"], issue_line)
+    section("Needs triage", buckets["triage"], issue_line)
+    section("Open PRs", prs, pr_line)
+
+    out += [
+        "---",
+        "",
+        "Ready = open, unassigned, not blocked, not awaiting triage. "
+        "Claim by assigning yourself, then branch.",
+        "",
+    ]
+    return "\n".join(out)
+
+
+def main(argv):
+    if len(argv) > 1 and argv[1] in ("-h", "--help"):
+        print(__doc__)
+        return 0
+    config_path = argv[1] if len(argv) > 1 else "board.config.json"
+    config = load_config(config_path)
+    token = gh_lib.require_token()
+
+    data = {repo: collect(repo, token) for repo in config["repos"]}
+    text = render(config, data)
+
+    out_path = config["output"]
+    with open(out_path, "w", encoding="utf-8") as fh:
+        fh.write(text)
+
+    counts = {k: 0 for k in ("ready", "in_progress", "blocked", "triage")}
+    for payload in data.values():
+        for issue in payload["issues"]:
+            counts[classify(issue, config)] += 1
+    open_prs = sum(len(p["prs"]) for p in data.values())
+    print(
+        f"wrote {out_path}: {counts['ready']} ready, {counts['in_progress']} in progress, "
+        f"{counts['blocked']} blocked, {counts['triage']} triage, {open_prs} open PR(s)"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
