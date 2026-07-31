@@ -6,20 +6,58 @@ The paved road is the supported path: not a fence around what you can do, but th
 
 ## Install
 
+This repo is **private**. `/plugin marketplace add` shells out to `git clone`, so the rule is simple: **if `git clone <url>` works in your terminal, the install works.** Get access first, then install.
+
+### 0. Access (once, per person)
+
+The repo owner adds you as a collaborator (repo → Settings → Collaborators). Then authenticate git to GitHub — pick one:
+
+```sh
+gh auth login                 # easiest: GitHub CLI, sets up HTTPS credentials for you
+ssh -T git@github.com         # or verify an existing SSH key: expect "successfully authenticated"
 ```
-/plugin marketplace add git@github.com:<you>/paved-road.git
+
+Verify before touching Claude Code — this is where private-repo installs actually fail:
+
+```sh
+git clone git@github.com:<owner>/paved-road.git /tmp/pr-check && rm -rf /tmp/pr-check
+```
+
+### 1. Install the plugin
+
+```
+/plugin marketplace add git@github.com:<owner>/paved-road.git
 /plugin install paved-road-core@paved-road
 ```
 
-Any git URL your `git clone` can reach works. Iterating locally? Add the directory instead:
+Use the HTTPS URL (`https://github.com/<owner>/paved-road.git`) instead if you authenticated with `gh auth login`. Iterating on the pack yourself? Point at the working copy — no auth involved:
 
 ```
 /plugin marketplace add /path/to/paved-road
 ```
 
-Pull updates later with `/plugin marketplace update paved-road`.
+Update later with `/plugin marketplace update paved-road`, then `/plugin` to confirm the version.
 
-**Requirements:** `python3` (3.9+) and `git` on PATH; macOS or Linux. The guards are stdlib-only Python — no dependencies, no runtime to install.
+### 2. Verify the guards actually enforce
+
+```sh
+git clone git@github.com:<owner>/paved-road.git && cd paved-road
+python3 tools/doctor.py
+```
+
+Expect `All guards enforcing on this machine.` This matters more than it looks: `hooks.json` invokes each guard as `python3 <script>`, and if that name does not resolve, Claude Code records a failed hook rather than a block — the guard fails **open**, silently. `doctor.py` runs the exact command line the harness runs.
+
+### Per-OS notes
+
+**Requirements everywhere:** `git`, and a `python3` on PATH (3.9+). The guards are stdlib-only — nothing to `pip install`.
+
+| OS | Status | Notes |
+|---|---|---|
+| **macOS** | Supported | `python3` ships with the Xcode command line tools (`xcode-select --install`); Homebrew's (`brew install python`) works too. `gh` via `brew install gh`. |
+| **Linux** | Supported | `python3` is present on essentially every distro; otherwise `apt install python3 git` / `dnf install python3 git`. |
+| **Windows** | Supported with a caveat | Install Python **from the Microsoft Store** — it provides `python3.exe`, which the python.org installer does *not* (that one gives you `python.exe` and `py.exe` only). Then confirm `python3 --version` responds in the same shell Claude Code uses. If it does not, either fix PATH or change `python3` to `python` in `paved-road-core/hooks/hooks.json`. **WSL2 is the smoother path** — inside WSL everything behaves like Linux. Either way, run `python3 tools/doctor.py` and believe its verdict, not the install docs. |
+
+Windows-specific behaviour that is already handled: the guards normalise `\` to `/` before matching paths, so `C:\repo\.env` is blocked exactly like `repo/.env`.
 
 ## What you get
 
@@ -59,15 +97,43 @@ paved-road-core/
   tests/guards.test.py              # every guard has a test
   bin/                              # helper scripts, on PATH in plugin installs
   rules/                            # path-scoped .claude/rules/ templates repos copy in
+tools/lint.py                       # pack lint — manifests, frontmatter, hook wiring
+tools/doctor.py                     # post-install check: do the guards enforce here?
+.github/workflows/{ci,release}.yml  # test matrix; tag → GitHub Release
 ```
+
+## CI and releases
+
+Two workflows, both stdlib-only — no third-party actions beyond GitHub's own.
+
+**`ci.yml`** — on every push to `main`, every PR, and on demand:
+- `test` matrix: {ubuntu, macOS, windows} × Python {3.9, 3.13} → pack lint + guard tests. The matrix is the point: the guards run on whatever machine installs the plugin, and 3.9 is the floor the README promises.
+- `hook-invocation`: asserts the literal `python3 <script>` command line from `hooks.json` returns exit 2 on a secret read — the fails-open case a unit test cannot catch.
+
+**`release.yml`** — on a `v*` tag: verifies the tag matches `version` in `plugin.json` (a tag that disagrees makes "which version am I on?" unanswerable), re-runs lint and tests, then creates a GitHub Release with generated notes. On a private repo the release is visible to exactly the people who can install the pack. No tarball is attached — consumers install from the git ref.
+
+Cutting a release:
+
+```sh
+# 1. bump "version" in paved-road-core/.claude-plugin/plugin.json, merge to main
+git switch main && git pull --ff-only
+git tag -a v0.2.0 -m "release: v0.2.0"
+git push origin v0.2.0
+```
+
+Consumers then run `/plugin marketplace update paved-road`.
 
 ## Tests
 
+Run the whole local gate — the same two commands CI runs, so a local pass and a CI pass cannot diverge:
+
 ```sh
-python3 paved-road-core/tests/guards.test.py
+python3 tools/lint.py                         # manifests, frontmatter, hook wiring, python floor
+python3 paved-road-core/tests/guards.test.py  # every guard, blocked and allowed cases
+python3 tools/doctor.py                       # does this machine actually enforce?
 ```
 
-Every guard needs a case in there — blocked *and* allowed. A guard with no allow-case is how you ship a rule that blocks everything.
+Every guard needs a case in the test file — blocked *and* allowed. A guard with no allow-case is how you ship a rule that blocks everything; the linter fails the build if a guard has no test at all, or is not wired into `hooks.json`.
 
 ## Extending it
 
