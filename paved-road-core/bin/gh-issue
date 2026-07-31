@@ -1,0 +1,191 @@
+#!/usr/bin/env python3
+"""gh-issue — issue read/write against GitHub, token from the keychain.
+
+    GH_TOKEN=$(gh-token) gh-issue list [--state open|closed|all] [--label L]
+                                       [--assignee me|<user>] [--milestone M]
+    GH_TOKEN=$(gh-token) gh-issue show <number>
+    GH_TOKEN=$(gh-token) gh-issue create --title T [--body B] [--body-file F]
+                                         [--label L]... [--assignee U]... [--milestone N]
+    GH_TOKEN=$(gh-token) gh-issue comment <number> --body B | --body-file F
+    GH_TOKEN=$(gh-token) gh-issue close <number> [--comment B] [--reason completed|not_planned]
+    GH_TOKEN=$(gh-token) gh-issue label <number> --label L...
+
+Common: --repo owner/name (default: the `origin` remote of the cwd).
+
+A narrow, named surface on purpose: it is something a permission allowlist can
+target (`Bash(gh-issue create:*)`), which raw `curl` to the API can never be —
+curl posts anywhere.
+"""
+
+import argparse
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import gh_lib  # noqa: E402
+
+
+def body_text(args):
+    if getattr(args, "body_file", None):
+        try:
+            with open(args.body_file, encoding="utf-8") as fh:
+                return fh.read()
+        except OSError as exc:
+            gh_lib.die(f"cannot read --body-file: {exc}")
+    return getattr(args, "body", None)
+
+
+def fmt_issue(issue, verbose=False):
+    labels = ",".join(lbl["name"] for lbl in issue.get("labels", []))
+    who = (issue.get("assignee") or {}).get("login", "-")
+    line = f"#{issue['number']:<5} {issue['state']:<6} {who:<12} {issue['title']}"
+    if labels:
+        line += f"  [{labels}]"
+    if verbose:
+        line += f"\n{issue.get('body') or '(no description)'}\n{issue['html_url']}"
+    return line
+
+
+def cmd_list(args, token, repo):
+    issues = gh_lib.paginate(
+        f"/repos/{repo}/issues",
+        token,
+        params={
+            "state": args.state,
+            "labels": ",".join(args.label) if args.label else None,
+            "assignee": args.assignee,
+            "milestone": args.milestone,
+        },
+    )
+    # /issues returns PRs too — they are issues to the API, not to a human.
+    issues = [i for i in issues if "pull_request" not in i]
+    if not issues:
+        print("no issues match")
+        return 0
+    for issue in issues:
+        print(fmt_issue(issue))
+    print(f"\n{len(issues)} issue(s) in {repo}")
+    return 0
+
+
+def cmd_show(args, token, repo):
+    issue = gh_lib.api("GET", f"/repos/{repo}/issues/{args.number}", token)
+    print(fmt_issue(issue, verbose=True))
+    comments = gh_lib.paginate(f"/repos/{repo}/issues/{args.number}/comments", token)
+    for c in comments:
+        print(f"\n--- {c['user']['login']} @ {c['created_at']} ---\n{c['body']}")
+    return 0
+
+
+def cmd_create(args, token, repo):
+    payload = {"title": args.title}
+    body = body_text(args)
+    if body:
+        payload["body"] = body
+    if args.label:
+        payload["labels"] = args.label
+    if args.assignee:
+        payload["assignees"] = args.assignee
+    if args.milestone:
+        payload["milestone"] = int(args.milestone)
+    issue = gh_lib.api("POST", f"/repos/{repo}/issues", token, body=payload)
+    print(f"created #{issue['number']}: {issue['html_url']}")
+    return 0
+
+
+def cmd_comment(args, token, repo):
+    body = body_text(args)
+    if not body:
+        gh_lib.die("--body or --body-file is required")
+    c = gh_lib.api(
+        "POST", f"/repos/{repo}/issues/{args.number}/comments", token, body={"body": body}
+    )
+    print(f"commented on #{args.number}: {c['html_url']}")
+    return 0
+
+
+def cmd_close(args, token, repo):
+    if args.comment:
+        gh_lib.api(
+            "POST",
+            f"/repos/{repo}/issues/{args.number}/comments",
+            token,
+            body={"body": args.comment},
+        )
+    gh_lib.api(
+        "PATCH",
+        f"/repos/{repo}/issues/{args.number}",
+        token,
+        body={"state": "closed", "state_reason": args.reason},
+    )
+    print(f"closed #{args.number} ({args.reason})")
+    return 0
+
+
+def cmd_label(args, token, repo):
+    gh_lib.api(
+        "POST",
+        f"/repos/{repo}/issues/{args.number}/labels",
+        token,
+        body={"labels": args.label},
+    )
+    print(f"labelled #{args.number}: {', '.join(args.label)}")
+    return 0
+
+
+def build_parser():
+    parser = argparse.ArgumentParser(
+        prog="gh-issue", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument("--repo", help="owner/name (default: origin remote)")
+    sub = parser.add_subparsers(dest="cmd", required=True)
+
+    p = sub.add_parser("list")
+    p.add_argument("--state", default="open", choices=["open", "closed", "all"])
+    p.add_argument("--label", action="append")
+    p.add_argument("--assignee")
+    p.add_argument("--milestone")
+    p.set_defaults(func=cmd_list)
+
+    p = sub.add_parser("show")
+    p.add_argument("number")
+    p.set_defaults(func=cmd_show)
+
+    p = sub.add_parser("create")
+    p.add_argument("--title", required=True)
+    p.add_argument("--body")
+    p.add_argument("--body-file", dest="body_file")
+    p.add_argument("--label", action="append")
+    p.add_argument("--assignee", action="append")
+    p.add_argument("--milestone")
+    p.set_defaults(func=cmd_create)
+
+    p = sub.add_parser("comment")
+    p.add_argument("number")
+    p.add_argument("--body")
+    p.add_argument("--body-file", dest="body_file")
+    p.set_defaults(func=cmd_comment)
+
+    p = sub.add_parser("close")
+    p.add_argument("number")
+    p.add_argument("--comment")
+    p.add_argument("--reason", default="completed", choices=["completed", "not_planned"])
+    p.set_defaults(func=cmd_close)
+
+    p = sub.add_parser("label")
+    p.add_argument("number")
+    p.add_argument("--label", action="append", required=True)
+    p.set_defaults(func=cmd_label)
+
+    return parser
+
+
+def main(argv=None):
+    args = build_parser().parse_args(argv)
+    token = gh_lib.require_token()
+    repo = gh_lib.current_repo(args.repo)
+    return args.func(args, token, repo)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -42,6 +42,9 @@ jobs:
       - name: Guard tests
         run: python paved-road-core/tests/guards.test.py
 
+      - name: Tool tests (no network, no token)
+        run: python paved-road-core/tests/tools.test.py
+
   hook-invocation:
     # hooks.json invokes the guards as `python3 <path>`. If that interpreter
     # name is not resolvable, every guard silently fails open — so assert the
