@@ -1,0 +1,15 @@
+{
+  "name": "paved-road",
+  "description": "The paved road for agent-assisted platform work: platform-engineering conventions, DevOps flow, and security guardrails for Claude Code. Install once, inherit in every repo.",
+  "owner": {
+    "name": "Abin Madanchery",
+    "email": "abinmadanchery@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "paved-road-core",
+      "source": "./paved-road-core",
+      "description": "Core pack: conventions, session hygiene, IaC change discipline, threat checks, secure defaults, pipeline debugging, incident and release flow, executor/reviewer personas, and deterministic secret/branch/prod guardrails."
+    }
+  ]
+}
