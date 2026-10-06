@@ -4,19 +4,19 @@ A Claude Code plugin pack for platform, DevOps and security work. Install it onc
 
 ## Quick start
 
-You need collaborator access to this private repo, and `python3` on your PATH.
+You need `git`, and `python3` on your PATH.
 
 In Claude Code:
 
 ```
-/plugin marketplace add git@github.com:abin-m/paved-road.git
+/plugin marketplace add abin-m/paved-road
 /plugin install paved-road-core@paved-road
 ```
 
 Then confirm the hooks block on your machine:
 
 ```sh
-git clone git@github.com:abin-m/paved-road.git && cd paved-road
+git clone https://github.com/abin-m/paved-road.git && cd paved-road
 python3 tools/doctor.py
 ```
 
@@ -31,7 +31,7 @@ If a step fails, see [docs/install.md](docs/install.md).
 ## Requirements
 
 - Claude Code.
-- `git`, with access to this repo. If `git clone` works in your terminal, the install works.
+- `git`.
 - Python 3.9 or later, as `python3`. The hooks and scripts use the standard library only.
 - macOS or Linux. Windows works with Python from the Microsoft Store, or under WSL2.
 
