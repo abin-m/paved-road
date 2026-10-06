@@ -2,7 +2,8 @@
 """Guard tests — a guard that ships without a test has never run.
 
 Each case feeds a hook event on stdin and asserts the exit code:
-exit 2 = blocked, exit 0 = allowed.
+exit 2 = blocked, exit 0 = allowed. The working-style hook blocks nothing, so
+its case asserts what it prints.
 
     python3 paved-road-core/tests/guards.test.py
 """
@@ -17,6 +18,8 @@ HOOKS = pathlib.Path(__file__).resolve().parent.parent / "hooks"
 SECRETS = HOOKS / "secrets-guard.py"
 MAIN = HOOKS / "main-guard.py"
 PROD = HOOKS / "prod-guard.py"
+STYLE = HOOKS / "working-style.py"
+STYLE_TEXT = HOOKS.parent / "working-style.md"
 
 # (guard, event, expected_exit, label)
 CASES = [
@@ -68,6 +71,18 @@ def run(guard: pathlib.Path, event: dict) -> int:
     return proc.returncode
 
 
+def style_output_ok() -> bool:
+    """The session hook must exit 0 and print working-style.md unchanged."""
+    proc = subprocess.run(
+        [sys.executable, str(STYLE)],
+        input=json.dumps({"hook_event_name": "SessionStart", "source": "startup"}).encode(),
+        capture_output=True,
+        timeout=15,
+    )
+    want = STYLE_TEXT.read_bytes()
+    return proc.returncode == 0 and proc.stdout == want and want.startswith(b"# Working style")
+
+
 def main() -> int:
     failures = 0
     for guard, event, expected, label in CASES:
@@ -76,7 +91,12 @@ def main() -> int:
         if not ok:
             failures += 1
         print(f"{'PASS' if ok else 'FAIL'}  {guard.name:18} {label} (exit {got}, want {expected})")
-    print(f"\n{len(CASES) - failures}/{len(CASES)} passed")
+    ok = style_output_ok()
+    if not ok:
+        failures += 1
+    print(f"{'PASS' if ok else 'FAIL'}  {STYLE.name:18} prints working-style.md on session start")
+    total = len(CASES) + 1
+    print(f"\n{total - failures}/{total} passed")
     return 1 if failures else 0
 
 

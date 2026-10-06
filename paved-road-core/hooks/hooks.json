@@ -1,6 +1,16 @@
 {
-  "description": "paved-road-core guardrails: secret material never enters agent context; no commits to a default branch and no bulk staging; no unasked-for mutation of production or staging.",
+  "description": "paved-road-core guardrails: secret material never enters agent context; no commits to a default branch and no bulk staging; no unasked-for mutation of production or staging. Also prints the pack's working style into each new session.",
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/working-style.py\""
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Read|Edit|Write|MultiEdit",

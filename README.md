@@ -72,6 +72,7 @@ Windows-specific behaviour that is already handled: the guards normalise `\` to 
 | `/paved-road-core:conventions` | Naming, repo layout, and where knowledge belongs — hook vs skill vs `CLAUDE.md` vs memory |
 | `/paved-road-core:writing` | How to write commits, PR descriptions, issues, comments, docs, runbooks, incident write-ups and end-of-task reports. Names each fault so a review can point at it |
 | `prose-check` script | Flags the mechanical faults from `writing` in Markdown files, or in a commit message on stdin. Prints `file:line: fault: fix` and exits 1 on findings |
+| `/paved-road-core:readme` | What a README must answer and in what order, limits for each section, and a fresh-clone test for its commands |
 | `/paved-road-core:session-close` | End-of-session hygiene: no unpushed work, no stranded branches (squash-safe, verified by content), work parked with a note |
 | `/paved-road-core:iac-change` | Terraform / Ansible / k8s / Helm discipline: plan → read the blast radius → state the rollback → apply the saved plan → verify the system |
 | `/paved-road-core:threat-check` | Pre-merge threat model on the diff: trust boundaries, object-level authz, injection, SSRF, secret handling, supply chain |
@@ -81,6 +82,7 @@ Windows-specific behaviour that is already handled: the guards normalise `\` to 
 | `/paved-road-core:release-flow` | Cut, promote, verify, roll back. Build once and promote the same artifact; keep migrations backward-compatible so rollback stays possible |
 | `executor` agent | Implementation persona: branch, build, run the project's *full* gate, open the PR, report honestly — including what it could not verify |
 | `reviewer` agent | Read-only review persona (no write tools, on purpose). Verifies by content, never by the author's claims; ranks findings blocking / should-fix / nit |
+| `working-style` hook | Prints `working-style.md` into every new session: thirteen short rules, including which skills to load. It never blocks |
 | `secrets-guard` hook | Blocks reads of `.env`, `*.tfvars`, kubeconfigs, private keys, `.ssh/`, `secrets/`, `creds/` — via the file tools *and* via `cat`/`grep` in Bash |
 | `main-guard` hook | Blocks commits on `main`/`master` and bulk staging (`git add -A`, `git commit -a`) |
 | `prod-guard` hook | Blocks mutating `kubectl`/`helm`/`terraform apply`/`ansible`/`ssh` against anything named prod/staging. Read-only diagnostics always pass; deliberate action is re-run as `PROD_OK=1 <cmd>`, so the authorisation is on the record |
@@ -138,6 +140,8 @@ paved-road-core/
   skills/<name>/SKILL.md            # procedures (frontmatter: name, description)
   hooks/hooks.json                  # event → matcher → script wiring
   hooks/<name>-guard.py             # guards: JSON on stdin, exit 2 blocks, exit 0 allows
+  hooks/working-style.py            # SessionStart hook: prints working-style.md
+  working-style.md                  # rules added to every session's context
   tests/guards.test.py              # every guard has a test
   bin/                              # helper scripts, on PATH in plugin installs
   tests/tools.test.py               # every bin/ script has a test
