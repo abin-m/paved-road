@@ -5,9 +5,9 @@ description: Plan and run work through GitHub issues, a board snapshot, and PRs 
 
 # planning-flow
 
-One loop: **board → claim → branch → PR → close.** State lives in GitHub, never in chat and never in an agent's memory.
+The loop has five steps: read the board, claim an issue, branch, open a PR, close the issue. State lives in GitHub. It never lives in chat or in an agent's memory.
 
-All commands need a token; supply it by command substitution so the value never enters the transcript (see `token-setup`):
+Every command needs a token. Supply it by command substitution, so the value never enters the transcript. See `token-setup`.
 
 ```sh
 GH_TOKEN=$(gh-token) <command>
@@ -15,7 +15,7 @@ GH_TOKEN=$(gh-token) <command>
 
 ## Setup, once per planning repo
 
-`board.config.json` in the repo root:
+Put `board.config.json` in the repo root:
 
 ```json
 {
@@ -27,7 +27,7 @@ GH_TOKEN=$(gh-token) <command>
 }
 ```
 
-Git-ignore `board.md` — it is a cache, regenerated on demand, not a source of truth.
+Add `board.md` to `.gitignore`. It is a cache that `board` regenerates on demand. GitHub holds the truth.
 
 ## 1. Orient
 
@@ -35,21 +35,21 @@ Git-ignore `board.md` — it is a cache, regenerated on demand, not a source of 
 GH_TOKEN=$(gh-token) board          # writes board.md
 ```
 
-Read `board.md` — one file read instead of N API calls. Sections are **derived**, since GitHub has no native workflow state:
+Read `board.md`. That is one file read in place of many API calls. GitHub has no workflow state of its own, so `board` derives each section:
 
 | Section | Derivation |
 |---|---|
 | Ready | open, unassigned, not blocked, not awaiting triage |
 | In progress | assigned |
 | Blocked | carries the blocked label |
-| Needs triage | carries the triage label, **or has no labels at all** |
+| Needs triage | carries the triage label, or has no labels at all |
 | Open PRs | open pull requests across the configured repos |
 
-Refresh the board at the start of a session, or whenever its timestamp is too old to trust. An unlabelled issue lands in triage by design — labelling is the act of accepting work.
+Refresh the board at the start of a session, and whenever its timestamp is too old to trust. An issue with no labels lands in triage on purpose. Labelling an issue is how you accept the work.
 
 ## 2. Break work down
 
-Write issues that can actually be picked up cold:
+Write issues that someone with no context can pick up:
 
 ```sh
 GH_TOKEN=$(gh-token) gh-issue create \
@@ -58,20 +58,28 @@ GH_TOKEN=$(gh-token) gh-issue create \
   --label feat
 ```
 
-A good issue states: **what** is being asked, **why** now, and **how you will know it is done** (the acceptance check). Split anything that cannot be finished in one sitting — a multi-day issue is a plan, not a task. The description is the spec: if a comment changes direction, edit the description, because the next person reads the top and stops.
+A good issue states three things:
 
-Use `--body-file` for anything multi-line; shell-escaping a long `--body` is where quoting bugs come from.
+- what is being asked
+- why it is needed now
+- how you will know it is done, which is the acceptance check
+
+Split anything that cannot be finished in one sitting. A multi-day issue is a plan, not a task.
+
+The description is the spec. If a comment changes direction, edit the description. The next reader reads the top and stops.
+
+Use `--body-file` for any body longer than one line. Escaping a long `--body` for the shell causes quoting bugs.
 
 ## 3. Claim and branch
 
-Claiming is assigning yourself — that is what moves the issue out of Ready:
+You claim an issue by assigning yourself. That moves it out of Ready.
 
 ```sh
 GH_TOKEN=$(gh-token) gh-issue label 12 --label in-progress   # optional
 git switch -c feat/token-refresh
 ```
 
-Branch naming follows `conventions`: `<type>/<short-topic>`. One issue, one branch, one PR. Work one claim at a time; a second claim before the first merges is how both stall.
+Branch naming follows `conventions`: `<type>/<short-topic>`. Use one branch and one PR for each issue. Work one claim at a time. If you take a second claim before the first merges, both stall.
 
 ## 4. Open the PR
 
@@ -83,7 +91,7 @@ GH_TOKEN=$(gh-token) gh-pr open \
   --draft            # drop --draft when the gate is green
 ```
 
-`--closes 12` appends `Closes #12`, so merging closes the issue — the board stays true without anyone tidying it. Run the project's full gate *before* dropping draft status (see the `executor` agent).
+`--closes 12` appends `Closes #12`, so merging closes the issue. The board then stays correct without anyone tidying it. Run the project's full gate before you drop draft status. See the `executor` agent.
 
 ## 5. Watch and land
 
@@ -93,7 +101,9 @@ GH_TOKEN=$(gh-token) gh-pr ready 9           # draft -> ready for review
 GH_TOKEN=$(gh-token) gh-pr merge 9 --squash --delete-branch
 ```
 
-`gh-pr status` exits non-zero when a check is failing — take the failure to `pipeline-debug` rather than re-running it. Merging is a human gate: leave `gh-pr merge` out of any permission allowlist so it keeps prompting.
+`gh-pr status` exits non-zero when a check is failing. Take the failure to `pipeline-debug`. Do not re-run it.
+
+A person approves each merge. Leave `gh-pr merge` out of any permission allowlist, so it keeps prompting.
 
 ## 6. Close the loop
 
@@ -106,9 +116,9 @@ GH_TOKEN=$(gh-token) board                   # refresh the snapshot
 
 Then run `session-close`.
 
-## Rules that keep this honest
+## Rules
 
-- **The issue is the record.** Progress notes go in issue or PR comments, not in chat — the next session reads GitHub, not this conversation.
-- **Never invent issue numbers.** Read the board or `gh-issue list` first; a `Closes #7` pointing at the wrong issue silently closes someone else's work.
-- **Do not bulk-close or bulk-label** to make a board look tidy. The board reflects reality; edit reality.
-- **Ask before creating issues in a repo you were not pointed at.** Issue creation is outward-facing — collaborators get notified.
+- The issue is the record. Put progress notes in issue or PR comments, not in chat. The next session reads GitHub, not this conversation.
+- Never invent an issue number. Read the board or run `gh-issue list` first. A `Closes #7` that points at the wrong issue closes someone else's work without any warning.
+- Do not bulk-close or bulk-label to make a board look tidy. The board shows the real state of the work. To change the board, change the work.
+- Ask before you create issues in a repo you were not pointed at. Creating an issue notifies the repo's collaborators.
