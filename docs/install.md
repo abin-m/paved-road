@@ -1,32 +1,21 @@
 # Install
 
-## Access
-
-The repo is private. The owner adds you as a collaborator under Settings, then Collaborators.
-
-Sign git in to GitHub with one of these:
-
-```sh
-gh auth login            # GitHub CLI, sets up HTTPS credentials
-ssh -T git@github.com    # an existing SSH key, expect "successfully authenticated"
-```
-
-Check access before you open Claude Code. `/plugin marketplace add` runs `git clone`, so a clone that fails here fails there too.
-
-```sh
-git clone git@github.com:abin-m/paved-road.git /tmp/pr-check && rm -rf /tmp/pr-check
-```
-
 ## Install the plugin
 
+The repo is public, so you need no account or token to install it.
+
 ```
-/plugin marketplace add git@github.com:abin-m/paved-road.git
+/plugin marketplace add abin-m/paved-road
 /plugin install paved-road-core@paved-road
 ```
 
-Use `https://github.com/abin-m/paved-road.git` if you signed in with `gh auth login`.
+`/plugin marketplace add` runs `git clone`. If it fails, check that this works in your terminal:
 
-To work on the pack itself, add your clone by path. This needs no sign-in.
+```sh
+git clone https://github.com/abin-m/paved-road.git /tmp/pr-check && rm -rf /tmp/pr-check
+```
+
+To work on the pack itself, add your clone by path.
 
 ```
 /plugin marketplace add <path-to-your-clone>
@@ -35,6 +24,8 @@ To work on the pack itself, add your clone by path. This needs no sign-in.
 Update with `/plugin marketplace update paved-road`. Run `/plugin` to see the installed version.
 
 ## Check the hooks
+
+Run this from a clone of the repo:
 
 ```sh
 python3 tools/doctor.py
@@ -93,10 +84,6 @@ To stop Claude Code asking before each script call, add this to `.claude/setting
 `gh-pr merge` and `gh-issue close` are left out. A person should approve a merge or a close each time.
 
 ## Troubleshooting
-
-### `Permission denied (publickey)` or `Repository not found`
-
-Git cannot reach the repo. Ask the owner to add you as a collaborator, then repeat the steps under Access.
 
 ### `python3 does not resolve`
 
