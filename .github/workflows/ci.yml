@@ -68,3 +68,9 @@ jobs:
             | python3 "paved-road-core/hooks/secrets-guard.py" && rc=0 || rc=$?
           test "$rc" -eq 2 || { echo "expected exit 2, got $rc"; exit 1; }
           echo "guard blocked as expected (exit 2)"
+      - name: python3 resolves and the session hook prints the working style
+        run: |
+          set -euo pipefail
+          echo '{"hook_event_name":"SessionStart"}' \
+            | python3 "paved-road-core/hooks/working-style.py" | grep -q '^# Working style'
+          echo "working style printed"
