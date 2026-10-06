@@ -1,53 +1,63 @@
 ---
 name: threat-check
-description: Pre-merge security review of a change — trust boundaries, authz, injection, secrets handling, dependency risk. Use before merging anything that touches auth, input handling, network exposure, IAM, CI config, or dependencies.
+description: Pre-merge security review of a change, covering trust boundaries, authz, injection, secrets handling and dependency risk. Use before merging anything that touches auth, input handling, network exposure, IAM, CI config, or dependencies.
 ---
 
 # threat-check
 
-A change-scoped threat model, not a full STRIDE workshop. Run it on the diff. Every question has a concrete answer or the change is not ready.
+This is a threat model of one change, not a full STRIDE workshop. Run it on the diff. Each question below needs a concrete answer. Without one, the change is not ready.
 
 ## 1. Where is the trust boundary?
 
-Name it explicitly: which side of this change is attacker-controlled? Untrusted input includes request bodies, headers, query params, filenames, webhook payloads, environment set by a CI job, and **anything read from another service**. If the diff moves data across a boundary, that is the review's centre of gravity.
+Name which side of this change an attacker controls. Untrusted input includes:
 
-## 2. Authentication vs authorization
+- request bodies, headers and query params
+- filenames
+- webhook payloads
+- environment set by a CI job
+- anything read from another service
 
-The common failure is not missing auth — it is auth without **authz**:
+If the diff moves data across a boundary, spend most of the review there.
 
-- Does every new endpoint/handler check that *this* caller may act on *this* object? Object-level checks (`resource.owner_id == caller.id`), not just "is logged in". This is BOLA/IDOR, top of the OWASP API list.
-- Are new admin/internal routes actually gated, or only unlinked from the UI?
-- Does a new role/scope widen an existing token's power? Say by how much.
-- Service-to-service: is the callee verifying the caller, or trusting the network?
+## 2. Authentication and authorization
+
+The common failure is authentication with no authorization check behind it. Missing authentication is rarer.
+
+- Does every new endpoint or handler check that this caller may act on this object? Being logged in is not enough. It needs an object-level check such as `resource.owner_id == caller.id`. The missing check is called BOLA or IDOR, and it tops the OWASP API list.
+- Are new admin or internal routes gated, or only left out of the UI?
+- Does a new role or scope widen what an existing token can do? Say by how much.
+- Between services, does the callee verify the caller, or does it trust the network?
 
 ## 3. Injection and deserialization
 
-Per untrusted value, trace where it lands:
+Trace where each untrusted value lands:
 
-- SQL → parameterised query, never string interpolation, including `ORDER BY` and `LIMIT`.
-- Shell → argument list, never `shell=True` / string concat. In CI, an untrusted value in a `run:` block is remote code execution.
-- Path → resolve and confirm the result stays under the intended root (`../` traversal).
-- Templates/HTML → context-correct escaping; `dangerouslySetInnerHTML`/`| safe` needs a stated reason.
-- Deserialization → never `pickle`/`yaml.load`/Java native on untrusted bytes. `yaml.safe_load`, JSON schema-validated.
-- SSRF → any server-side fetch of a user-supplied URL needs an allowlist; block link-local `169.254.169.254` (cloud metadata) explicitly.
+| Lands in | Required handling |
+|---|---|
+| SQL | A parameterised query. Never string interpolation, and that includes `ORDER BY` and `LIMIT`. |
+| Shell | An argument list. Never `shell=True` or string concatenation. In CI, an untrusted value in a `run:` block is remote code execution. |
+| Path | Resolve it and confirm the result stays under the intended root. This stops `../` traversal. |
+| Templates or HTML | Escaping that fits the context. `dangerouslySetInnerHTML` or `\| safe` needs a stated reason. |
+| Deserializer | `yaml.safe_load`, or JSON validated against a schema. Never `pickle`, `yaml.load` or Java native deserialization on untrusted bytes. |
+| Server-side fetch (SSRF) | An allowlist for any user-supplied URL. Block link-local `169.254.169.254`, the cloud metadata address, by name. |
 
 ## 4. Secrets
 
-- No secret literal in code, config, test fixture, CI file, or log line.
-- New secret → where does it come from at runtime (env from a secret store, mounted file, vault)? Who can read it? How is it rotated?
-- Check the diff does not log tokens/PII: `logger.info(request.headers)` leaks `Authorization`.
-- Error responses must not return stack traces or internal hostnames to the caller.
+- No secret literal appears in code, config, a test fixture, a CI file or a log line.
+- For a new secret, say where it comes from at runtime: env from a secret store, a mounted file, or a vault. Say who can read it and how it is rotated.
+- The diff does not log tokens or personal data. `logger.info(request.headers)` leaks `Authorization`.
+- Error responses do not return stack traces or internal hostnames to the caller.
 
 ## 5. Dependencies and supply chain
 
-- New dependency: is it maintained, and does it pull a large transitive tree? Prefer stdlib.
-- Lockfile updated in the same commit; pin CI actions by commit SHA, not a floating tag.
-- Run the project's audit (`pip-audit`, `npm audit --omit=dev`, `trivy fs .`) and report real findings only — triage noise rather than pasting it.
+- For a new dependency, check that it is maintained and whether it pulls in a large transitive tree. Prefer the standard library.
+- Update the lockfile in the same commit. Pin CI actions by commit SHA, not by a floating tag.
+- Run the project's audit: `pip-audit`, `npm audit --omit=dev` or `trivy fs .`. Report real findings only. Triage the noise, and do not paste it.
 
 ## 6. Blast radius if this is wrong
 
-One sentence: what does an attacker get if this control fails? "Read of one user's own data" and "read of every tenant's data" are different merges.
+Say in one sentence what an attacker gets if this control fails. "Read of one user's own data" and "read of every tenant's data" need different levels of scrutiny before merge.
 
 ## Output
 
-Report findings ranked by severity, each as: **location → what an attacker does → the fix**. State explicitly what you checked and found clean. If nothing is found, say so plainly — do not invent findings to look thorough.
+Rank findings by severity. Give each one as the location, what an attacker does there, and the fix. State what you checked and found clean. If you found nothing, say so plainly. Do not invent findings to look thorough.
