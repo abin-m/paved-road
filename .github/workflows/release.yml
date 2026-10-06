@@ -50,7 +50,7 @@ jobs:
         run: python paved-road-core/tests/tools.test.py
 
       - name: Prose check
-        run: python paved-road-core/bin/prose-check --warn .
+        run: python paved-road-core/bin/prose-check .
 
       - name: Create release
         env:
