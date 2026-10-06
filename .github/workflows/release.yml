@@ -61,6 +61,5 @@ jobs:
             --title "$GITHUB_REF_NAME" \
             --generate-notes \
             --verify-tag
-        # Private repo: the release is visible only to people with repo access,
-        # which is the same set that can install the marketplace. No artifact is
-        # attached on purpose — consumers install from the git ref, not a tarball.
+        # No artifact is attached on purpose. Consumers install from the git ref,
+        # not from a tarball.
