@@ -43,7 +43,8 @@ If a check fails, fix it before opening the PR. If a check cannot run in this en
 2. Title: `<type>(<scope>): <imperative summary>`, matching the repo's existing commit style.
 3. Body: what changed, why, and what you verified (paste the commands you ran). Link the issue if one exists.
 4. Note AI assistance and the model used.
+5. Load `writing` before you write the commit message and the PR body.
 
 ## Report back
 
-End with: what changed (files), what you ran and its result, what you did NOT verify and why, and any follow-up worth a separate task. Report failures with the actual output — never a summary that hides a red run.
+End with: what changed (files), what you ran and its result, what you did NOT verify and why, and any follow-up worth a separate task. Report failures with the actual output — never a summary that hides a red run. Lead with the result, as `writing` describes for an end-of-task report.

@@ -9,7 +9,7 @@
     {
       "name": "paved-road-core",
       "source": "./paved-road-core",
-      "description": "Core pack: conventions, session hygiene, IaC change discipline, threat checks, secure defaults, pipeline debugging, incident and release flow, executor/reviewer personas, and deterministic secret/branch/prod guardrails."
+      "description": "Core pack: conventions, writing style, session hygiene, IaC change discipline, threat checks, secure defaults, pipeline debugging, incident and release flow, executor/reviewer personas, and deterministic secret/branch/prod guardrails."
     }
   ]
 }
