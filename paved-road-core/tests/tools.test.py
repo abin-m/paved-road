@@ -5,7 +5,8 @@
 
 What is covered is what breaks silently: remote-URL parsing (an unparsed remote
 sends every call to the wrong repo), token resolution *order* (a stale env var
-quietly shadowing the keychain), issue classification, and board rendering.
+quietly shadowing the keychain), issue classification, board rendering, and the
+prose-check rules (each one flagged and each one left alone).
 The HTTP layer is deliberately not mocked — a mocked GitHub proves nothing
 about GitHub.
 """
@@ -15,6 +16,7 @@ import importlib.machinery
 import importlib.util
 import pathlib
 import sys
+import tempfile
 
 BIN = pathlib.Path(__file__).resolve().parent.parent / "bin"
 sys.path.insert(0, str(BIN))
@@ -36,6 +38,7 @@ board = load("board", "board_mod")
 gh_issue = load("gh-issue", "gh_issue_mod")
 gh_pr = load("gh-pr", "gh_pr_mod")
 gh_token = load("gh-token", "gh_token_mod")
+prose_check = load("prose-check", "prose_check_mod")
 
 FAILURES = []
 
@@ -209,6 +212,79 @@ for parser, argv, label in [
         check(label, "no exit", "SystemExit")
     except SystemExit:
         check(label, "SystemExit", "SystemExit")
+
+
+# ---------------------------------------------------------------------------
+# prose-check
+# ---------------------------------------------------------------------------
+
+
+def faults(text, **kwargs):
+    return [fault for _, fault, _ in prose_check.check_text(text, **kwargs)]
+
+
+LONG = " ".join(["Word"] + ["word"] * 30) + "."
+
+for label, text, want in [
+    ("em dash aside", "The guard blocks it — always.", ["dash-aside"]),
+    ("spaced double hyphen", "The guard blocks it -- always.", ["dash-aside"]),
+    ("number range is not an aside", "Use Python 3.9–3.13.", []),
+    ("hyphenated word is not an aside", "A stdlib-only script.", []),
+    ("semicolon chain", "Push the branch; open the PR.", ["semicolon-chain"]),
+    ("html entity is not a semicolon", "Lint &amp; test.", []),
+    ("unicode arrow", "Plan → apply.", ["arrow-word"]),
+    ("ascii arrow", "Plan -> apply.", ["arrow-word"]),
+    ("comparison is not an arrow", "Needs Python >= 3.9.", []),
+    ("filler", "Note that the token expires.", ["filler"]),
+    ("filler is matched on word boundaries", "A footnote that helps.", []),
+    ("buzzword", "A robust pipeline.", ["buzzword"]),
+    ("buzzword inside a longer word", "Use the leveraged-buyout fixture.", []),
+    ("status prose", "The parser was recently rewritten.", ["status-prose"]),
+    ("long sentence", LONG, ["long-sentence"]),
+    ("two short sentences", "One short sentence. " * 2 + LONG[:60] + ".", []),
+    ("long sentence wrapped over lines", LONG.replace(" ", "\n", 3), ["long-sentence"]),
+    ("list items are separate sentences", "\n".join(["- five words in this item"] * 8), []),
+    ("four bolds close together", "**a** b **c** d\n**e** f **g** h", ["loud-bold"]),
+    ("three bolds", "**a** b **c** d **e**", []),
+    ("bolds far apart", "**a** and **b**" + "\n\nPlain." * 25 + "\n\n**c** and **d**", []),
+    ("fenced code is skipped", "```sh\na -> b; c — d\n```", []),
+    ("inline code is skipped", "Run `a -> b; c` first.", []),
+    ("table row is skipped", "| a — b | c -> d |", []),
+    ("block quote is skipped", "> a — b; c", []),
+    ("frontmatter is skipped", "---\ndescription: a — b\n---\nPlain text.", []),
+    ("url is skipped", "See https://example.com/a->b;c for more.", []),
+    (
+        "off and on markers",
+        "<!-- prose-check off -->\nA — b.\n<!-- prose-check on -->\nC — d.",
+        ["dash-aside"],
+    ),
+    ("heading is checked", "## Plan -> apply", ["arrow-word"]),
+]:
+    check(f"prose-check: {label}", faults(text), want)
+
+check("prose-check: --max-words is honoured", faults("One two three four.", max_words=3), ["long-sentence"])
+check(
+    "prose-check: finding carries its line number",
+    [(line, fault) for line, fault, _ in prose_check.check_text("Fine.\n\nNot fine — here.")],
+    [(3, "dash-aside")],
+)
+check(
+    "prose-check: long sentence reported on the line it starts",
+    [line for line, _, _ in prose_check.check_text("Short one.\n" + LONG)],
+    [2],
+)
+
+with tempfile.TemporaryDirectory() as tmp:
+    docs = pathlib.Path(tmp)
+    (docs / "clean.md").write_text("A plain sentence.\n", encoding="utf-8")
+    check("prose-check exits 0 on a clean directory", prose_check.main([tmp]), 0)
+    (docs / "sub").mkdir()
+    (docs / "sub" / "bad.md").write_text("Plan -> apply.\n", encoding="utf-8")
+    (docs / "notes.txt").write_text("Plan -> apply.\n", encoding="utf-8")
+    check("prose-check exits 1 on a finding in a subdirectory", prose_check.main([tmp]), 1)
+    check("prose-check --warn exits 0 on a finding", prose_check.main(["--warn", tmp]), 0)
+    check("prose-check checks a named non-.md file", prose_check.main([str(docs / "notes.txt")]), 1)
+    check("prose-check exits 2 on a missing path", prose_check.main([str(docs / "absent.md")]), 2)
 
 
 print(f"\n{'FAILED: ' + ', '.join(FAILURES) if FAILURES else 'all checks passed'}")
