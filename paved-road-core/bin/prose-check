@@ -1,0 +1,249 @@
+#!/usr/bin/env python3
+"""prose-check: flag the mechanical faults named in the `writing` skill.
+
+    prose-check [--warn] [--max-words N] [path ...]
+    git log -1 --format=%B | prose-check -
+
+A path is a Markdown file, or a directory searched for *.md (default: the cwd).
+`-` reads stdin, for a commit message or a PR body.
+
+Prints `file:line: fault: fix` for each finding. Exits 1 on findings, 0 when
+clean or with --warn, 2 when a path cannot be read.
+
+Only prose is checked. Frontmatter, fenced code, tables, block quotes, inline
+code and URLs are skipped. Wrap a quoted bad example in
+`<!-- prose-check off -->` and `<!-- prose-check on -->`.
+"""
+
+import argparse
+import os
+import re
+import sys
+
+MAX_WORDS = 30
+# More bold spans than BOLD_LIMIT inside BOLD_WINDOW lines is one finding.
+BOLD_LIMIT = 3
+BOLD_WINDOW = 20
+SKIP_DIRS = {".git", "node_modules", ".venv", "__pycache__"}
+
+FILLER = (
+    "note that",
+    "please note",
+    "it is worth noting",
+    "it should be noted",
+    "in order to",
+    "needless to say",
+    "as mentioned",
+    "at the end of the day",
+    "going forward",
+)
+BUZZWORDS = (
+    "leverage",
+    "leverages",
+    "leveraging",
+    "utilize",
+    "utilizes",
+    "utilizing",
+    "robust",
+    "seamless",
+    "seamlessly",
+    "best-in-class",
+    "world-class",
+    "cutting-edge",
+    "synergy",
+    "holistic",
+)
+STATUS = ("recently", "currently", "at the moment", "as of now")
+
+
+def phrase_re(phrases):
+    body = "|".join(re.escape(p) for p in phrases)
+    return re.compile(r"(?<![\w-])(" + body + r")(?![\w-])", re.IGNORECASE)
+
+
+FENCE_RE = re.compile(r"^\s*(```|~~~)")
+TOGGLE_RE = re.compile(r"<!--\s*prose-check\s+(off|on)\s*-->")
+COMMENT_RE = re.compile(r"<!--.*?-->")
+CODE_RE = re.compile(r"(`+).+?\1")
+LINK_RE = re.compile(r"!?\[([^\]]*)\]\([^)]*\)")
+URL_RE = re.compile(r"https?://\S+")
+ENTITY_RE = re.compile(r"&#?\w+;")
+BOLD_RE = re.compile(r"\*\*[^*\n]+\*\*|__[^_\n]+__")
+ITEM_RE = re.compile(r"^\s*([-*+]|\d+[.)])\s+")
+HEADING_RE = re.compile(r"^\s{0,3}#{1,6}\s")
+SENTENCE_END_RE = re.compile(r"(?<=[.!?])[\"')\]]*\s+(?=[\"'(\[]*[A-Z])")
+WORD_RE = re.compile(r"[A-Za-z0-9][\w'-]*")
+
+# (fault, pattern, fix). The fix may use {0} for the matched text.
+LINE_RULES = (
+    ("dash-aside", re.compile(r"—|\s–\s|\s--\s"), "split the sentence at the dash"),
+    ("semicolon-chain", re.compile(r";(?=\s|$)"), "end the sentence at the semicolon"),
+    (
+        "arrow-word",
+        re.compile(r"→|⇒|←|->|=>"),
+        "write the word the arrow stands for",
+    ),
+    ("filler", phrase_re(FILLER), 'cut "{0}"'),
+    ("buzzword", phrase_re(BUZZWORDS), 'replace "{0}" with the plain word or the measured fact'),
+    ("status-prose", phrase_re(STATUS), '"{0}" goes stale: state the fact, or move it to the issue'),
+)
+
+
+def clean(line):
+    """Reduce a Markdown line to the prose a reader sees."""
+    line = COMMENT_RE.sub(" ", line)
+    line = CODE_RE.sub("code", line)
+    line = LINK_RE.sub(r"\1", line)
+    line = URL_RE.sub("link", line)
+    return ENTITY_RE.sub(" ", line)
+
+
+def check_line(lineno, text, findings):
+    for fault, pattern, fix in LINE_RULES:
+        match = pattern.search(text)
+        if match:
+            findings.append((lineno, fault, fix.format(match.group(0).strip().lower())))
+
+
+def check_sentences(block, max_words, findings):
+    """A block is one paragraph or list item, as (lineno, text) pairs."""
+    starts, parts, pos = [], [], 0
+    for lineno, text in block:
+        starts.append((pos, lineno))
+        parts.append(text)
+        pos += len(text) + 1
+    joined = " ".join(parts)
+    begin = 0
+    ends = [m.end() for m in SENTENCE_END_RE.finditer(joined)] + [len(joined)]
+    for end in ends:
+        words = len(WORD_RE.findall(joined[begin:end]))
+        if words > max_words:
+            lineno = [ln for offset, ln in starts if offset <= begin][-1]
+            findings.append(
+                (lineno, "long-sentence", f"{words} words, split it (limit {max_words})")
+            )
+        begin = end
+
+
+def body_start(lines):
+    """Index of the first line after YAML frontmatter, or 0 without any."""
+    if lines and lines[0].strip() == "---":
+        for index in range(1, len(lines)):
+            if lines[index].strip() == "---":
+                return index + 1
+    return 0
+
+
+def check_text(text, max_words=MAX_WORDS):
+    """Return sorted (lineno, fault, fix) findings for one Markdown document."""
+    findings = []
+    lines = text.splitlines()
+    fence = None
+    off = False
+    block = []
+    bolds = []
+
+    def flush():
+        if block:
+            check_sentences(block, max_words, findings)
+            del block[:]
+
+    for lineno in range(body_start(lines) + 1, len(lines) + 1):
+        raw = lines[lineno - 1]
+        marker = FENCE_RE.match(raw)
+        if fence:
+            if marker and marker.group(1) == fence:
+                fence = None
+            continue
+        if marker:
+            flush()
+            fence = marker.group(1)
+            continue
+        toggle = TOGGLE_RE.search(raw)
+        if toggle:
+            flush()
+            off = toggle.group(1) == "off"
+            continue
+        stripped = raw.strip()
+        if off or not stripped or stripped.startswith(("|", ">")):
+            flush()
+            continue
+
+        text_line = clean(raw)
+        check_line(lineno, text_line, findings)
+        if HEADING_RE.match(raw):
+            flush()
+            continue
+        if ITEM_RE.match(raw):
+            flush()
+
+        spans = len(BOLD_RE.findall(text_line))
+        if spans:
+            bolds[:] = [seen for seen in bolds if lineno - seen < BOLD_WINDOW] + [lineno] * spans
+            if len(bolds) > BOLD_LIMIT:
+                findings.append(
+                    (
+                        lineno,
+                        "loud-bold",
+                        f"more than {BOLD_LIMIT} bold spans in {BOLD_WINDOW} lines, "
+                        "keep bold for the one thing a skimmer must not miss",
+                    )
+                )
+                del bolds[:]
+
+        block.append((lineno, ITEM_RE.sub("", text_line).strip()))
+    flush()
+    return sorted(findings)
+
+
+def markdown_files(paths):
+    for path in paths:
+        if not os.path.isdir(path):
+            yield path
+            continue
+        for root, dirs, files in os.walk(path):
+            dirs[:] = sorted(d for d in dirs if d not in SKIP_DIRS)
+            for name in sorted(files):
+                if name.lower().endswith(".md"):
+                    yield os.path.join(root, name)
+
+
+def build_parser():
+    parser = argparse.ArgumentParser(
+        prog="prose-check",
+        description="Flag the mechanical faults named in the `writing` skill.",
+    )
+    parser.add_argument("paths", nargs="*", default=["."], help="files or directories, or - for stdin")
+    parser.add_argument("--warn", action="store_true", help="report findings but exit 0")
+    parser.add_argument("--max-words", type=int, default=MAX_WORDS, help="sentence length limit")
+    return parser
+
+
+def main(argv=None):
+    args = build_parser().parse_args(argv)
+    total = files = 0
+    for path in markdown_files(args.paths):
+        if path == "-":
+            name, text = "<stdin>", sys.stdin.read()
+        else:
+            name = os.path.normpath(path).replace(os.sep, "/")
+            try:
+                with open(path, encoding="utf-8") as fh:
+                    text = fh.read()
+            except (OSError, UnicodeDecodeError) as exc:
+                print(f"prose-check: cannot read {name}: {exc}", file=sys.stderr)
+                return 2
+        found = check_text(text, args.max_words)
+        for lineno, fault, fix in found:
+            print(f"{name}:{lineno}: {fault}: {fix}")
+        total += len(found)
+        files += 1 if found else 0
+    if total:
+        print(f"{total} finding(s) in {files} file(s)")
+        return 0 if args.warn else 1
+    print("prose-check: clean")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
