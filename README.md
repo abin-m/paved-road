@@ -104,7 +104,7 @@ Update the pack with `/plugin marketplace update paved-road`.
 python3 tools/lint.py
 python3 paved-road-core/tests/guards.test.py
 python3 paved-road-core/tests/tools.test.py
-python3 paved-road-core/bin/prose-check --warn .
+python3 paved-road-core/bin/prose-check .
 ```
 
 CI runs the same four commands. [docs/development.md](docs/development.md) covers the layout, adding a skill or a hook, and releases.
