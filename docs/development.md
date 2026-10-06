@@ -27,7 +27,7 @@ tools/doctor.py                     # checks the hooks work on this machine
 python3 tools/lint.py
 python3 paved-road-core/tests/guards.test.py
 python3 paved-road-core/tests/tools.test.py
-python3 paved-road-core/bin/prose-check --warn .
+python3 paved-road-core/bin/prose-check .
 python3 tools/doctor.py
 ```
 
@@ -38,6 +38,8 @@ Lint fails when:
 - a skill's `name` differs from its directory name
 - a file name is not kebab-case
 - a Python file does not parse on Python 3.9
+
+`prose-check` fails when any Markdown file in the repo has a writing fault. Run it with `--warn` to list the faults and still exit 0.
 
 ## Add to the pack
 

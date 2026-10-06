@@ -1,31 +1,31 @@
 ---
 name: incident-response
-description: Handle a live production incident — stabilise first, capture the timeline, diagnose, then fix and write it up. Use when something is down, degraded, or alerting in production.
+description: Handle a live production incident. Stabilise first, capture the timeline, diagnose, then fix and write it up. Use when something is down, degraded, or alerting in production.
 ---
 
 # incident-response
 
-Order matters: **stabilise → capture → diagnose → fix → write up.** Diagnosing a burning system before stopping the burn costs users minutes you cannot return.
+Work in this order: stabilise, capture, diagnose, fix, write up. Stop the damage before you look for the cause. Every minute spent diagnosing a system that is still failing is a minute of outage for its users.
 
 ## 0. Before touching anything
 
-Note the time (UTC) and start a running log. Every command you run and every observation gets a timestamped line. The log *is* the postmortem — reconstructed timelines are fiction.
+Note the time in UTC and start a running log. Give every command you run and every observation a timestamped line. The write-up comes from this log. A timeline rebuilt from memory afterwards is unreliable.
 
-State the impact in one line: what is broken, for whom, since when. If you cannot say that yet, that is the first thing to find.
+State the impact in one line: what is broken, for whom, since when. If you cannot say that yet, find it out first.
 
 ## 1. Stabilise
 
-Restore service before understanding it. In preference order:
+Restore service before you understand the failure. Try these in order:
 
-1. **Roll back** the most recent change (deploy, config, feature flag, infra apply). Recency is the best prior — check what shipped in the window before symptoms started.
-2. **Shed load / fail over** — scale up, drain a bad node, switch traffic away.
-3. **Disable the feature** — a flag off is cheaper than a fix forward.
+1. Roll back the most recent change: a deploy, a config change, a feature flag or an infra apply. The most recent change is the most likely cause, so check what shipped just before the symptoms started.
+2. Shed load or fail over. Scale up, drain a bad node, or switch traffic away.
+3. Disable the feature. Turning a flag off is cheaper than shipping a fix.
 
-Fix-forward only when rollback is impossible (a migration ran) or clearly slower. Announce the action before you take it if anyone else is on the system.
+Fix forward only when a rollback is impossible, for example after a migration ran, or when it is clearly slower. If anyone else is on the system, announce the action before you take it.
 
 ## 2. Capture volatile evidence
 
-Do this *before* the restart that destroys it:
+Do this before the restart that destroys it:
 
 ```sh
 kubectl describe pod <p> ; kubectl logs <p> --previous   # previous = the crashed container
@@ -38,24 +38,37 @@ Save the output to a file. `--previous` logs and pod events are gone after the n
 
 ## 3. Diagnose
 
-Work the four signals: saturation (CPU/mem/disk/conns), errors (rate, status codes), latency (p99, not mean), traffic (a spike, or a *drop* meaning upstream failure).
+Check four signals:
 
-Then ask what changed: deploy, config, cert expiry, credential expiry, disk filling, a dependency's incident, a scheduled job, or traffic pattern. "Nothing changed" is almost always false — check the change log, not memory.
+- Saturation: CPU, memory, disk, connections.
+- Errors: rate and status codes.
+- Latency: p99, not the mean.
+- Traffic: a spike, or a drop that points to an upstream failure.
+
+Then ask what changed. Candidates are a deploy, a config change, an expired certificate or credential, a filling disk, a dependency's incident, a scheduled job, or a new traffic pattern. "Nothing changed" is almost always false. Check the change log, not your memory.
 
 ## 4. Fix
 
-Smallest change that resolves it. One change at a time, verified before the next — batched changes make the cause unknowable. Verify against the user-visible symptom, not the dashboard alone.
+Make the smallest change that resolves it. Make one change at a time and verify it before the next. After a batch of changes you cannot tell which one worked. Verify against the symptom the user sees, not the dashboard alone.
 
-## 5. Write up (same day)
+## 5. Write up, the same day
 
-Blameless, and mechanical rather than narrative:
+Keep it blameless. Report facts in a fixed structure, and do not tell a story.
 
-- **Impact**: who, what, how long, how measured.
-- **Timeline**: UTC, from first signal to resolution — straight from your log.
-- **Cause**: the chain, not one word. "Cert expired" is a symptom of "no expiry monitoring".
-- **Detection**: how you found out. If a user told you, that is a finding.
-- **Actions**: each with an owner and an issue link. Actions with neither do not happen.
+- Impact: who was affected, what failed, for how long, and how you measured it.
+- Timeline: in UTC, from the first signal to resolution, copied from your log.
+- Cause: the chain of causes, not one word. "Cert expired" is a symptom of "no expiry monitoring".
+- Detection: how you found out. If a user told you, that is a finding.
+- Actions: each with an owner and an issue link. An action with neither does not get done.
+
+The `writing` skill says how an incident write-up should open.
 
 ## Guardrails during an incident
 
-Pressure is exactly when discipline slips. Still: no secrets read into context, no unreviewed writes to prod outside the stabilising action, and say plainly what you ran. If you took a shortcut, state it in the write-up rather than hiding it.
+Discipline slips under pressure, so these rules still hold:
+
+- Read no secrets into context.
+- Make no unreviewed writes to production, apart from the stabilising action.
+- Say plainly what you ran.
+
+If you took a shortcut, state it in the write-up.
