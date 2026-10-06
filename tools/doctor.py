@@ -30,6 +30,10 @@ BLOCKING_CASES = [
     ),
 ]
 
+# Printed into every session by the SessionStart hook.
+STYLE_HOOK = "working-style.py"
+STYLE_HEADING = "# Working style"
+
 problems: list[str] = []
 
 
@@ -80,6 +84,19 @@ def main() -> int:
         else:
             print(f"  FAIL  {script} returned {proc.returncode}, expected 2 — guard is not enforcing")
             problems.append(script)
+
+    print("\nSession hook (must print the working style):")
+    path = HOOKS / STYLE_HOOK
+    if not path.exists():
+        print(f"  FAIL  {STYLE_HOOK} missing at {path}")
+        problems.append(STYLE_HOOK)
+    else:
+        proc = subprocess.run([runner, str(path)], input=b"{}", capture_output=True, timeout=30)
+        if proc.returncode == 0 and proc.stdout.decode("utf-8", "replace").startswith(STYLE_HEADING):
+            print(f"  OK    {STYLE_HOOK} printed the working style")
+        else:
+            print(f"  FAIL  {STYLE_HOOK} returned {proc.returncode} without the working style")
+            problems.append(STYLE_HOOK)
 
     if problems:
         print(f"\n{len(problems)} problem(s): {', '.join(problems)}")
