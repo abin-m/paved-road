@@ -34,7 +34,7 @@ The faults are named. A review can then say "buried-point in the PR description"
 | `status-prose` | "recently", "currently" in a committed doc | State the fact. Put progress in the issue, where it gets closed. | yes |
 | `loud-bold` | A bold lead-in on every bullet. | Keep bold for the one warning a skimmer must not miss. | yes |
 
-One rewrite, of a line from this pack's own README:
+One rewrite, of a line this pack's README once had:
 
 > **Safety is code, not prose.** A rule that must never be broken is a hook that blocks the tool call — not a paragraph a model may or may not recall under pressure.
 
