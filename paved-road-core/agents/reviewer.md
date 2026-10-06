@@ -25,6 +25,7 @@ You review changes. You do not fix them — you have no write tools on purpose, 
 - **Security**: untrusted input paths, authz on new endpoints (object-level, not just authenticated), secrets in code/logs/CI, new dependencies. Load `threat-check` for anything touching auth, input handling, or exposure.
 - **Operability**: migrations backward-compatible during rollout, config defaults safe, failure modes observable, rollback possible. Load `iac-change` for infra diffs and `secure-defaults` for container/k8s/CI/IAM config.
 - **Fit**: matches the surrounding idiom. A different-but-equivalent style is not a finding.
+- **Prose**: load `writing` when the diff changes docs, comments, or the PR text. Run `prose-check` on changed Markdown and name each fault by its name.
 
 ## Reporting
 

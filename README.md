@@ -70,6 +70,8 @@ Windows-specific behaviour that is already handled: the guards normalise `\` to 
 | `gh-pr` script | `open` (with `--closes N`, `--draft`, `--reviewer`) / `list` / `status` (checks, reviews, mergeability; non-zero when a check fails) / `ready` / `merge` |
 | `board` script | Fetches open issues and PRs across the repos in `board.config.json` and writes one compact `board.md` — Ready / In progress / Blocked / Needs triage / Open PRs, plus a deadline countdown |
 | `/paved-road-core:conventions` | Naming, repo layout, and where knowledge belongs — hook vs skill vs `CLAUDE.md` vs memory |
+| `/paved-road-core:writing` | How to write commits, PR descriptions, issues, comments, docs, runbooks, incident write-ups and end-of-task reports. Names each fault so a review can point at it |
+| `prose-check` script | Flags the mechanical faults from `writing` in Markdown files, or in a commit message on stdin. Prints `file:line: fault: fix` and exits 1 on findings |
 | `/paved-road-core:session-close` | End-of-session hygiene: no unpushed work, no stranded branches (squash-safe, verified by content), work parked with a note |
 | `/paved-road-core:iac-change` | Terraform / Ansible / k8s / Helm discipline: plan → read the blast radius → state the rollback → apply the saved plan → verify the system |
 | `/paved-road-core:threat-check` | Pre-merge threat model on the diff: trust boundaries, object-level authz, injection, SSRF, secret handling, supply chain |
@@ -108,7 +110,7 @@ Scope: a classic token with `repo` (private repos, issue creation, PR merges). S
 {
   "permissions": {
     "allow": [
-      "Bash(gh-token:*)", "Bash(board:*)",
+      "Bash(gh-token:*)", "Bash(board:*)", "Bash(prose-check:*)",
       "Bash(gh-issue list:*)", "Bash(gh-issue show:*)", "Bash(gh-issue comment:*)",
       "Bash(gh-issue create:*)", "Bash(gh-issue label:*)",
       "Bash(gh-pr open:*)", "Bash(gh-pr list:*)", "Bash(gh-pr status:*)"
@@ -138,6 +140,7 @@ paved-road-core/
   hooks/<name>-guard.py             # guards: JSON on stdin, exit 2 blocks, exit 0 allows
   tests/guards.test.py              # every guard has a test
   bin/                              # helper scripts, on PATH in plugin installs
+  tests/tools.test.py               # every bin/ script has a test
   rules/                            # path-scoped .claude/rules/ templates repos copy in
 tools/lint.py                       # pack lint — manifests, frontmatter, hook wiring
 tools/doctor.py                     # post-install check: do the guards enforce here?
@@ -149,7 +152,7 @@ tools/doctor.py                     # post-install check: do the guards enforce 
 Two workflows, both stdlib-only — no third-party actions beyond GitHub's own.
 
 **`ci.yml`** — on every push to `main`, every PR, and on demand:
-- `test` matrix: {ubuntu, macOS, windows} × Python {3.9, 3.13} → pack lint + guard tests. The matrix is the point: the guards run on whatever machine installs the plugin, and 3.9 is the floor the README promises.
+- `test` matrix: {ubuntu, macOS, windows} × Python {3.9, 3.13} → pack lint + guard tests + tool tests + `prose-check --warn`. The matrix is the point: the guards run on whatever machine installs the plugin, and 3.9 is the floor the README promises.
 - `hook-invocation`: asserts the literal `python3 <script>` command line from `hooks.json` returns exit 2 on a secret read — the fails-open case a unit test cannot catch.
 
 **`release.yml`** — on a `v*` tag: verifies the tag matches `version` in `plugin.json` (a tag that disagrees makes "which version am I on?" unanswerable), re-runs lint and tests, then creates a GitHub Release with generated notes. On a private repo the release is visible to exactly the people who can install the pack. No tarball is attached — consumers install from the git ref.
@@ -167,11 +170,13 @@ Consumers then run `/plugin marketplace update paved-road`.
 
 ## Tests
 
-Run the whole local gate — the same two commands CI runs, so a local pass and a CI pass cannot diverge:
+Run the whole local gate. CI runs the same commands, so a local pass and a CI pass cannot diverge:
 
 ```sh
 python3 tools/lint.py                         # manifests, frontmatter, hook wiring, python floor
 python3 paved-road-core/tests/guards.test.py  # every guard, blocked and allowed cases
+python3 paved-road-core/tests/tools.test.py   # bin/ tools, no network and no token
+python3 paved-road-core/bin/prose-check --warn .  # writing faults, reported but not blocking
 python3 tools/doctor.py                       # does this machine actually enforce?
 ```
 
