@@ -14,7 +14,7 @@ The `.editorconfig` of the AI layer for personal projects. Consult before creati
 | Repos | kebab-case, noun-first | `homelab-infra`, `self-service-cli` |
 | Directories & files | kebab-case; language files follow language idiom (`snake_case.py`, `PascalCase.tsx`) | `board-snapshot`, `parse_config.py` |
 | Branches | `<type>/<short-topic>` | `feat/oidc-login`, `fix/nginx-502` |
-| Commits | Conventional Commits, imperative, ≤50-char subject | `feat(api): add token refresh` |
+| Commits | Conventional Commits, imperative, ≤72-char subject | `feat(api): add token refresh` |
 | Env vars | SCREAMING_SNAKE, prefixed by tool | `HOMELAB_VAULT_ADDR` |
 | Skills | kebab-case dir + matching `name:` in frontmatter | `skills/iac-change/SKILL.md` |
 
@@ -39,6 +39,4 @@ Decide by *scope* and *enforcement*, not by convenience:
 
 ## Docs style
 
-- Lead with what the thing is and how to run it. Rationale after, not before.
-- One example beats three paragraphs. Show the command, show the output shape.
-- No status-report prose in committed docs ("recently refactored", "currently working on") — that rots. Put it in the issue.
+The `writing` skill holds the style for docs, commits, PRs, issues and comments. Load it before writing any of them.

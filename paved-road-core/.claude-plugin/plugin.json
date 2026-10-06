@@ -1,7 +1,7 @@
 {
   "name": "paved-road-core",
-  "description": "Platform-engineering, DevOps and security pack for Claude Code: naming and knowledge-placement conventions, end-of-session hygiene, infrastructure-change discipline (plan, blast radius, rollback), pre-merge threat checks, secure-by-default container/CI/IAM config, CI pipeline debugging, incident triage, release and rollback flow, GitHub issue/PR/planning tools backed by a token read from the OS keychain at use time (gh-token, gh-issue, gh-pr, board), executor and reviewer personas, plus deterministic guardrails that block secret reads, default-branch commits, bulk staging, and unasked-for production access.",
-  "version": "0.3.0",
+  "description": "Platform-engineering, DevOps and security pack for Claude Code: naming and knowledge-placement conventions, a writing style with a prose checker (prose-check), end-of-session hygiene, infrastructure-change discipline (plan, blast radius, rollback), pre-merge threat checks, secure-by-default container/CI/IAM config, CI pipeline debugging, incident triage, release and rollback flow, GitHub issue/PR/planning tools backed by a token read from the OS keychain at use time (gh-token, gh-issue, gh-pr, board), executor and reviewer personas, plus deterministic guardrails that block secret reads, default-branch commits, bulk staging, and unasked-for production access.",
+  "version": "0.4.0",
   "author": {
     "name": "Abin Madanchery"
   },
