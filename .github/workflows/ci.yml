@@ -32,7 +32,7 @@ jobs:
       # Pin by SHA for a stricter posture (see secure-defaults):
       #   gh api repos/actions/checkout/git/ref/tags/v5 --jq .object.sha
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
 
