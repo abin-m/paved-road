@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 260" width="880" height="260" role="img" aria-label="How a guard decides on a tool call"><title>How a guard decides on a tool call</title><style>
+  .card{fill:#FFFFFF;stroke:#E4E7EC}
+  .hair{stroke:#EAECF0;stroke-width:1}
+  .tile{fill:#EEF3FE}
+  .ico{fill:none;stroke:#2E6BE6;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  .wire{fill:none;stroke:#D0D5DD;stroke-width:1.25}
+  .chev{fill:none;stroke:#98A2B3;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+  .pin{fill:#FFFFFF;stroke:#98A2B3;stroke-width:1.25}
+  .pina{fill:#2E6BE6}
+  .t{fill:#101828;font:600 14px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif}
+  .tc{fill:#101828;font:600 13.5px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif}
+  .c{fill:#667085;font:12.5px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif}
+  .m{fill:#475467;font:12px 'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .eb{fill:#98A2B3;font:600 10.5px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;letter-spacing:.12em}
+  .eba{fill:#2E6BE6;font:600 10.5px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;letter-spacing:.12em}
+  .tag{fill:#EEF3FE}.tagt{fill:#2E6BE6;font:600 10.5px 'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .ok{fill:#12B76A}.no{fill:#F04438}
+  .okb{fill:#ECFDF3;stroke:#ABEFC6}.nob{fill:#FEF3F2;stroke:#FECDCA}
+  .halo{fill:#EEF3FE}.node{fill:#2E6BE6}.nodet{fill:#FFFFFF;font:600 12px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif}
+  .nodep{fill:#FFFFFF;stroke:#2E6BE6;stroke-width:1.5}.nodept{fill:#2E6BE6;font:600 12px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif}
+  .track{fill:none;stroke:#E4E7EC;stroke-width:2}
+  @media (prefers-color-scheme:dark){
+    .card{fill:#12161C;stroke:#262C36}.hair{stroke:#20262F}
+    .tile,.tag,.halo{fill:#17233A}.ico{stroke:#7AA5FF}.tagt,.eba,.nodept{fill:#7AA5FF}
+    .wire{stroke:#3A414C}.chev{stroke:#5D6673}.pin{fill:#12161C;stroke:#5D6673}.pina,.node{fill:#4C82F7}
+    .t,.tc{fill:#F2F4F7}.c{fill:#98A2B3}.m{fill:#B4BCC8}.eb{fill:#667085}
+    .ok{fill:#32D583}.no{fill:#F97066}.okb{fill:#0E241A;stroke:#1C4A33}.nob{fill:#2A1414;stroke:#5A2320}
+    .nodep{fill:#12161C;stroke:#4C82F7}.track{stroke:#262C36}
+  }
+</style>
+<defs>
+  <filter id="sh" x="-40%" y="-40%" width="180%" height="200%">
+    <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="#101828" flood-opacity=".05"/>
+    <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#101828" flood-opacity=".06"/>
+  </filter>
+</defs><rect class="card" filter="url(#sh)" x="68" y="64" width="56" height="56" rx="14"/><rect class="tile" x="78" y="74" width="36" height="36" rx="9"/><g class="ico" transform="translate(86.0 82.0)"><rect x="2.8" y="3.8" width="14.4" height="12.4" rx="2.4"/><path d="m6.2 8.2 2.3 1.8-2.3 1.8M10.6 12.6h3.2"/></g><text class="tc" x="96" y="148" text-anchor="middle">Tool call</text><text class="m" x="96" y="168" text-anchor="middle">Bash: git add -A</text><path class="wire" d="M136 92H260"/><path class="chev" transform="translate(198 92) rotate(0)" d="M-3 -5 2 0-3 5"/><rect class="card" filter="url(#sh)" x="272" y="64" width="56" height="56" rx="14"/><rect class="tile" x="282" y="74" width="36" height="36" rx="9"/><g class="ico" transform="translate(290.0 82.0)"><circle cx="5" cy="10" r="1.8"/><circle cx="15" cy="5.2" r="1.8"/><circle cx="15" cy="14.8" r="1.8"/><path d="M6.8 10h2.4c1.6 0 1.8-4.8 3.6-4.8M9.2 10c1.6 0 1.8 4.8 3.6 4.8"/></g><text class="tc" x="300" y="148" text-anchor="middle">Matcher</text><text class="m" x="300" y="168" text-anchor="middle">hooks.json</text><path class="wire" d="M340 92H464"/><path class="chev" transform="translate(402 92) rotate(0)" d="M-3 -5 2 0-3 5"/><rect class="card" filter="url(#sh)" x="476" y="64" width="56" height="56" rx="14"/><rect class="tile" x="486" y="74" width="36" height="36" rx="9"/><g class="ico" transform="translate(494.0 82.0)"><path d="M10 2.6 16 4.8v4.6c0 3.9-2.5 6.5-6 8-3.5-1.5-6-4.1-6-8V4.8z"/><path d="m7.4 10 1.8 1.8 3.5-3.6"/></g><text class="tc" x="504" y="148" text-anchor="middle">Guards run</text><text class="c" x="504" y="168" text-anchor="middle">tool input as JSON</text><path class="wire" d="M544 92H596C630 92 630 48 664 48H676"/><path class="wire" d="M596 92C630 92 630 136 664 136H676"/><circle class="pina" cx="596" cy="92" r="3.5"/><rect class="okb" x="676" y="22" width="180" height="52" rx="12"/><circle class="ok" cx="696" cy="42" r="4"/><text class="tc" x="708" y="46.5">Allowed</text><rect class="nob" x="676" y="110" width="180" height="52" rx="12"/><circle class="no" cx="696" cy="130" r="4"/><text class="tc" x="708" y="134.5">Blocked</text><text class="c" x="692" y="66">every guard exits 0</text><text class="c" x="692" y="154">reason goes to the agent</text><path class="hair" d="M24 206H856"/><g class="ico" transform="translate(24 222)"><circle cx="10" cy="10" r="7.5"/><path d="M10 9.2v4.2M10 6.6v.1"/></g><text class="c" x="52" y="236">If python3 does not resolve, the hook errors and the call goes through. <tspan class="m">tools/doctor.py</tspan> checks for this.</text></svg>
