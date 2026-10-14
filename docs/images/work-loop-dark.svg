@@ -9,7 +9,7 @@
   .pina{fill:#2E6BE6}
   .t{fill:#101828;font:600 14px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif}
   .tc{fill:#101828;font:600 13.5px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif}
-  .c{fill:#667085;font:12.5px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif}
+  .c{fill:#667085;font:13px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif}
   .m{fill:#475467;font:12px 'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
   .eb{fill:#98A2B3;font:600 10.5px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;letter-spacing:.12em}
   .eba{fill:#2E6BE6;font:600 10.5px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;letter-spacing:.12em}
@@ -23,7 +23,7 @@
     .card{fill:#12161C;stroke:#262C36}.hair{stroke:#20262F}
     .tile,.tag,.halo{fill:#17233A}.ico{stroke:#7AA5FF}.tagt,.eba,.nodept{fill:#7AA5FF}
     .wire{stroke:#3A414C}.chev{stroke:#5D6673}.pin{fill:#12161C;stroke:#5D6673}.pina,.node{fill:#4C82F7}
-    .t,.tc{fill:#F2F4F7}.c{fill:#98A2B3}.m{fill:#B4BCC8}.eb{fill:#667085}
+    .t,.tc{fill:#F2F4F7}.c{fill:#B9C1CC}.m{fill:#D0D6DE}.eb{fill:#8B95A3}
     .ok{fill:#32D583}.no{fill:#F97066}.okb{fill:#0E241A;stroke:#1C4A33}.nob{fill:#2A1414;stroke:#5A2320}
     .nodep{fill:#12161C;stroke:#4C82F7}.track{stroke:#262C36}
 </style>

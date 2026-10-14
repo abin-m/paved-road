@@ -9,7 +9,7 @@
   .pina{fill:#2E6BE6}
   .t{fill:#101828;font:600 14px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif}
   .tc{fill:#101828;font:600 13.5px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif}
-  .c{fill:#667085;font:12.5px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif}
+  .c{fill:#667085;font:13px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif}
   .m{fill:#475467;font:12px 'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
   .eb{fill:#98A2B3;font:600 10.5px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;letter-spacing:.12em}
   .eba{fill:#2E6BE6;font:600 10.5px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;letter-spacing:.12em}
