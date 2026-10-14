@@ -43,7 +43,10 @@ If a step fails, see [docs/install.md](docs/install.md).
 
 The pack adds four kinds of part to a Claude Code session. Each part runs at a different moment.
 
-![The four parts of the pack, when each runs, and what it produces](docs/images/architecture.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/architecture-dark.svg">
+  <img alt="The pack's four parts and when each runs" src="docs/images/architecture-light.svg">
+</picture>
 
 - The session hook prints `working-style.md` when a session starts, so every session begins with the same rules.
 - A skill loads only when a task matches its description. Until then, only its one-line description is in context.
@@ -54,7 +57,10 @@ The pack adds four kinds of part to a Claude Code session. Each part runs at a d
 
 Claude Code passes each tool call to the guards as JSON. A guard that exits with code 2 blocks the call, and its message goes back to the agent.
 
-![How hooks.json routes a tool call to the guards and how the exit code decides it](docs/images/guard-flow.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/guard-flow-dark.svg">
+  <img alt="How a guard allows or blocks a tool call" src="docs/images/guard-flow-light.svg">
+</picture>
 
 This is the guards' real output for three blocked calls and one allowed call:
 
@@ -64,7 +70,10 @@ This is the guards' real output for three blocked calls and one allowed call:
 
 The `planning-flow` skill runs work through GitHub issues and pull requests. The issue is the record, so a new session picks up from GitHub instead of from chat history.
 
-![Eight steps from reading the board to the issue closing on merge](docs/images/work-loop.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/work-loop-dark.svg">
+  <img alt="Eight steps from reading the board to the issue closing on merge" src="docs/images/work-loop-light.svg">
+</picture>
 
 ## What you get
 
