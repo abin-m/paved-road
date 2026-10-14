@@ -1,0 +1,36 @@
+name: Bug report
+description: Something in the pack does not work as documented.
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: The command or prompt you ran, and the output you got.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of python3 tools/doctor.py
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: Plugin version
+      description: Run /plugin in Claude Code to see it.
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [macOS, Linux, Windows, WSL2]
+    validations:
+      required: true

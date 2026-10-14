@@ -1,5 +1,9 @@
 # paved-road
 
+[![CI](https://github.com/abin-m/paved-road/actions/workflows/ci.yml/badge.svg)](https://github.com/abin-m/paved-road/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/abin-m/paved-road)](https://github.com/abin-m/paved-road/releases)
+[![Licence: MIT](https://img.shields.io/badge/licence-MIT-blue)](LICENSE)
+
 A Claude Code plugin pack for platform, DevOps and security work. Install it once, and every repo you open gets the same skills, GitHub scripts and safety hooks.
 
 ## Quick start
@@ -34,6 +38,33 @@ If a step fails, see [docs/install.md](docs/install.md).
 - `git`.
 - Python 3.9 or later, as `python3`. The hooks and scripts use the standard library only.
 - macOS or Linux. Windows works with Python from the Microsoft Store, or under WSL2.
+
+## How it works
+
+The pack adds four kinds of part to a Claude Code session. Each part runs at a different moment.
+
+![The four parts of the pack, when each runs, and what it produces](docs/images/architecture.svg)
+
+- The session hook prints `working-style.md` when a session starts, so every session begins with the same rules.
+- A skill loads only when a task matches its description. Until then, only its one-line description is in context.
+- A guard runs before every matching tool call. It can stop the call, and the model cannot talk its way past it.
+- Scripts call the GitHub API with a token that `gh-token` reads from the OS keychain. The value goes to the shell, not to the transcript.
+
+### Guards
+
+Claude Code passes each tool call to the guards as JSON. A guard that exits with code 2 blocks the call, and its message goes back to the agent.
+
+![How hooks.json routes a tool call to the guards and how the exit code decides it](docs/images/guard-flow.svg)
+
+This is the guards' real output for three blocked calls and one allowed call:
+
+![Guard output for a blocked secret read, bulk staging, a production kubectl, and an allowed PROD_OK call](docs/images/guards-in-action.svg)
+
+### The work loop
+
+The `planning-flow` skill runs work through GitHub issues and pull requests. The issue is the record, so a new session picks up from GitHub instead of from chat history.
+
+![Eight steps from reading the board to the issue closing on merge](docs/images/work-loop.svg)
 
 ## What you get
 
@@ -108,6 +139,12 @@ python3 paved-road-core/bin/prose-check .
 ```
 
 CI runs the same four commands. [docs/development.md](docs/development.md) covers the layout, adding a skill or a hook, and releases.
+
+## Contributing
+
+Bug reports and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before you open a pull request. Everyone taking part follows the [code of conduct](CODE_OF_CONDUCT.md).
+
+Report a security problem privately, as described in [SECURITY.md](SECURITY.md).
 
 ## Licence
 

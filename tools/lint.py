@@ -36,7 +36,7 @@ PLUGIN = ROOT / "paved-road-core"
 # The floor the README promises consumers.
 PY_FLOOR = (3, 9)
 
-KEBAB_EXEMPT = {"README.md", "SKILL.md", "LICENSE", "CLAUDE.md", "AGENTS.md", "CONTRIBUTING.md"}
+KEBAB_EXEMPT = {"README.md", "SKILL.md", "LICENSE", "CLAUDE.md", "AGENTS.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "SECURITY.md"}
 KEBAB_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*(\.[a-z0-9.]+)?$")
 # Python mandates snake_case for anything `import`ed — a hyphen is a syntax
 # error in an import statement. Shared libraries beside the entry points are

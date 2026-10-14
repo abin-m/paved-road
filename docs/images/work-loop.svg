@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 344" width="880" height="344" role="img" aria-label="The work loop, from issue to merged pull request"><title>The work loop, from issue to merged pull request</title><style>
+  .card{fill:#FFFFFF;stroke:#E4E7EC}
+  .hair{stroke:#EAECF0;stroke-width:1}
+  .tile{fill:#EEF3FE}
+  .ico{fill:none;stroke:#2E6BE6;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  .wire{fill:none;stroke:#D0D5DD;stroke-width:1.25}
+  .chev{fill:none;stroke:#98A2B3;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+  .pin{fill:#FFFFFF;stroke:#98A2B3;stroke-width:1.25}
+  .pina{fill:#2E6BE6}
+  .t{fill:#101828;font:600 14px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif}
+  .tc{fill:#101828;font:600 13.5px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif}
+  .c{fill:#667085;font:12.5px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif}
+  .m{fill:#475467;font:12px 'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .eb{fill:#98A2B3;font:600 10.5px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;letter-spacing:.12em}
+  .eba{fill:#2E6BE6;font:600 10.5px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;letter-spacing:.12em}
+  .tag{fill:#EEF3FE}.tagt{fill:#2E6BE6;font:600 10.5px 'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .ok{fill:#12B76A}.no{fill:#F04438}
+  .okb{fill:#ECFDF3;stroke:#ABEFC6}.nob{fill:#FEF3F2;stroke:#FECDCA}
+  .halo{fill:#EEF3FE}.node{fill:#2E6BE6}.nodet{fill:#FFFFFF;font:600 12px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif}
+  .nodep{fill:#FFFFFF;stroke:#2E6BE6;stroke-width:1.5}.nodept{fill:#2E6BE6;font:600 12px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif}
+  .track{fill:none;stroke:#E4E7EC;stroke-width:2}
+  @media (prefers-color-scheme:dark){
+    .card{fill:#12161C;stroke:#262C36}.hair{stroke:#20262F}
+    .tile,.tag,.halo{fill:#17233A}.ico{stroke:#7AA5FF}.tagt,.eba,.nodept{fill:#7AA5FF}
+    .wire{stroke:#3A414C}.chev{stroke:#5D6673}.pin{fill:#12161C;stroke:#5D6673}.pina,.node{fill:#4C82F7}
+    .t,.tc{fill:#F2F4F7}.c{fill:#98A2B3}.m{fill:#B4BCC8}.eb{fill:#667085}
+    .ok{fill:#32D583}.no{fill:#F97066}.okb{fill:#0E241A;stroke:#1C4A33}.nob{fill:#2A1414;stroke:#5A2320}
+    .nodep{fill:#12161C;stroke:#4C82F7}.track{stroke:#262C36}
+  }
+</style>
+<defs>
+  <filter id="sh" x="-40%" y="-40%" width="180%" height="200%">
+    <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="#101828" flood-opacity=".05"/>
+    <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#101828" flood-opacity=".06"/>
+  </filter>
+</defs><rect class="track" x="72" y="116" width="736" height="136" rx="68.0"/><path class="chev" transform="translate(260.0 116) rotate(0)" d="M-3 -5 2 0-3 5"/><path class="chev" transform="translate(260.0 252) rotate(180)" d="M-3 -5 2 0-3 5"/><path class="chev" transform="translate(440.0 116) rotate(0)" d="M-3 -5 2 0-3 5"/><path class="chev" transform="translate(440.0 252) rotate(180)" d="M-3 -5 2 0-3 5"/><path class="chev" transform="translate(620.0 116) rotate(0)" d="M-3 -5 2 0-3 5"/><path class="chev" transform="translate(620.0 252) rotate(180)" d="M-3 -5 2 0-3 5"/><path class="chev" transform="translate(808 184.0) rotate(90)" d="M-3 -5 2 0-3 5"/><path class="chev" transform="translate(72 184.0) rotate(-90)" d="M-3 -5 2 0-3 5"/><circle class="halo" cx="170" cy="116" r="22"/><circle class="node" cx="170" cy="116" r="14"/><text class="nodet" x="170" y="120.2" text-anchor="middle">1</text><text class="tc" x="170" y="62" text-anchor="middle">Orient</text><text class="m" x="170" y="82" text-anchor="middle">board → board.md</text><circle class="halo" cx="350" cy="116" r="22"/><circle class="node" cx="350" cy="116" r="14"/><text class="nodet" x="350" y="120.2" text-anchor="middle">2</text><text class="tc" x="350" y="62" text-anchor="middle">Claim</text><text class="c" x="350" y="82" text-anchor="middle">assign the issue</text><circle class="halo" cx="530" cy="116" r="22"/><circle class="node" cx="530" cy="116" r="14"/><text class="nodet" x="530" y="120.2" text-anchor="middle">3</text><text class="tc" x="530" y="62" text-anchor="middle">Branch</text><text class="m" x="530" y="82" text-anchor="middle">git switch -c feat/x</text><circle class="halo" cx="710" cy="116" r="22"/><circle class="node" cx="710" cy="116" r="14"/><text class="nodet" x="710" y="120.2" text-anchor="middle">4</text><text class="tc" x="710" y="62" text-anchor="middle">Build and check</text><text class="c" x="710" y="82" text-anchor="middle">executor agent</text><circle class="halo" cx="710" cy="252" r="22"/><circle class="node" cx="710" cy="252" r="14"/><text class="nodet" x="710" y="256.2" text-anchor="middle">5</text><text class="tc" x="710" y="300" text-anchor="middle">Draft PR</text><text class="m" x="710" y="320" text-anchor="middle">gh-pr open --closes 12</text><circle class="halo" cx="530" cy="252" r="22"/><circle class="node" cx="530" cy="252" r="14"/><text class="nodet" x="530" y="256.2" text-anchor="middle">6</text><text class="tc" x="530" y="300" text-anchor="middle">Review</text><text class="c" x="530" y="320" text-anchor="middle">reviewer agent, read-only</text><circle class="halo" cx="350" cy="252" r="22"/><circle class="nodep" cx="350" cy="252" r="14"/><text class="nodept" x="350" y="256.2" text-anchor="middle">7</text><text class="tc" x="350" y="300" text-anchor="middle">Merge</text><text class="c" x="350" y="320" text-anchor="middle">a person approves</text><circle class="halo" cx="170" cy="252" r="22"/><circle class="node" cx="170" cy="252" r="14"/><text class="nodet" x="170" y="256.2" text-anchor="middle">8</text><text class="tc" x="170" y="300" text-anchor="middle">Issue closes</text><text class="c" x="170" y="320" text-anchor="middle">Closes #12 on merge</text><text class="eba" x="440" y="172.0" text-anchor="middle">STATE LIVES IN GITHUB</text><text class="c" x="440" y="192.0" text-anchor="middle">A new session reads the board, not the chat.</text><circle class="node" cx="380" cy="216.0" r="5"/><text class="c" x="392" y="220.0">agent</text><circle class="nodep" cx="448" cy="216.0" r="5"/><text class="c" x="460" y="220.0">person</text></svg>
