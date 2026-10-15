@@ -31,7 +31,7 @@ jobs:
     steps:
       # Pin by SHA for a stricter posture (see secure-defaults):
       #   gh api repos/actions/checkout/git/ref/tags/v5 --jq .object.sha
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
@@ -59,7 +59,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: python3 resolves and the guard blocks a secret read
         run: |
           set -euo pipefail
