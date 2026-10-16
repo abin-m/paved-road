@@ -37,5 +37,12 @@
 {"guard": "prod", "label": "explicit PROD_OK", "bash": "PROD_OK=1 kubectl -n prod rollout undo deployment/api"}
 {"guard": "prod", "label": "az aks show prod", "bash": "az aks show -n prod-cluster -g rg"}
 {"guard": "prod", "label": "pulumi preview production", "bash": "pulumi preview --stack production"}
-{"guard": "prod", "label": "kubectl exec curl in prod", "bash": "kubectl -n prod exec api-1 -- curl -s localhost/healthz", "known_miss": true, "issue": 24}
-{"guard": "prod", "label": "ssh tail syslog on prod", "bash": "ssh prod-db-01 tail -n 50 /var/log/syslog", "known_miss": true, "issue": 24}
+{"guard": "prod", "label": "kubectl exec curl in prod", "bash": "kubectl -n prod exec api-1 -- curl -s localhost/healthz"}
+{"guard": "prod", "label": "ssh tail syslog on prod", "bash": "ssh prod-db-01 tail -n 50 /var/log/syslog"}
+{"guard": "prod", "label": "kubectl exec ps in a named container", "bash": "kubectl -n prod exec api-1 -c app -- ps aux"}
+{"guard": "prod", "label": "ssh pipe between read-only commands", "bash": "ssh prod-db-01 'ps aux | grep api'"}
+{"guard": "prod", "label": "ssh with port and user", "bash": "ssh -p 2222 deploy@prod-db-01 df -h"}
+{"guard": "prod", "label": "ssh sudo journalctl for one unit", "bash": "ssh prod-db-01 sudo journalctl -u api --since \"10 min ago\""}
+{"guard": "prod", "label": "ssh systemctl status", "bash": "ssh prod-db-01 systemctl status api"}
+{"guard": "prod", "label": "kubectl exec curl with silent and header flags", "bash": "kubectl -n prod exec api-1 -- curl -sS -H 'Accept: application/json' localhost/healthz"}
+{"guard": "prod", "label": "ssh ss listening sockets", "bash": "ssh prod-db-01 ss -tlnp"}

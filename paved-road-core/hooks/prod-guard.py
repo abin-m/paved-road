@@ -17,6 +17,7 @@ agent learns to route around silently.
 import json
 import os
 import re
+import shlex
 import sys
 
 # Environments that need an explicit ask.
@@ -42,6 +43,29 @@ VALUE_FLAGS = {
     "--cluster", "--user", "-i", "--inventory", "-e", "--extra-vars",
     "--limit", "--tags", "-p", "--port", "--since", "--tail",
 }
+
+# Commands that only read, allowed as the remote command of `kubectl exec`
+# or `ssh` on a prod target. Each maps to flags that would make it write.
+# A long flag matches by prefix, so "--data" also covers --data-raw. A short
+# flag matches anywhere in a cluster, so "-X" also covers -sXPOST.
+REMOTE_READERS = {
+    "cat": (), "head": (), "tail": (), "grep": (), "ls": (), "wc": (),
+    "ps": (), "df": (), "du": (), "free": (), "uptime": (),
+    "uname": (), "whoami": (), "id": (), "netstat": (),
+    "date": ("-s", "--set"),
+    "ss": ("-K", "--kill"),
+    "curl": ("-X", "--request", "-d", "--data", "--json", "-F", "--form", "-T",
+             "--upload", "-o", "--output", "-O", "--remote-name"),
+    "journalctl": ("--vacuum", "--rotate", "--flush", "--sync", "--relinquish",
+                   "--setup-keys", "--update-catalog"),
+}
+# systemctl only reads with these verbs.
+SYSTEMCTL_READ = {"status", "is-active", "is-enabled", "is-failed", "show", "list-units", "cat"}
+# Shell syntax that lets a read-only command run or write something else.
+# A pipe is allowed, and each side is checked on its own.
+REMOTE_SHELL = re.compile(r"[;&<>`]|\$\(")
+# ssh options that take a value, so the value is not mistaken for the host.
+SSH_VALUE_OPTS = set("bcDEeFIiJLlmOoPpQRSWw")
 
 # (regex over the command, human label)
 MUTATORS = [
@@ -92,14 +116,118 @@ def _subcommands(cmd: str, tool: str) -> list[str]:
     return bare
 
 
+def split_chain(cmd: str) -> list:
+    """Split a command at `&&`, `||`, `;`, `|` and newlines that sit outside quotes."""
+    parts, buf, quote, i = [], "", "", 0
+    while i < len(cmd):
+        ch = cmd[i]
+        if quote:
+            if ch == quote:
+                quote = ""
+        elif ch in "'\"":
+            quote = ch
+        elif cmd[i:i + 2] in ("&&", "||"):
+            parts.append(buf)
+            buf = ""
+            i += 2
+            continue
+        elif ch in ";|\n":
+            parts.append(buf)
+            buf = ""
+            i += 1
+            continue
+        buf += ch
+        i += 1
+    parts.append(buf)
+    return parts
+
+
+def _denied(arg: str, denied: tuple) -> bool:
+    """True when arg is, or contains, one of the denied flags."""
+    if arg.startswith("--"):
+        return any(arg.startswith(d) for d in denied if d.startswith("--"))
+    if arg.startswith("-"):
+        return any(d[1] in arg[1:] for d in denied if len(d) == 2)
+    return False
+
+
+def remote_read_only(words: list) -> bool:
+    """True when a remote command, as a word list, only reads."""
+    if not words:
+        return False
+    text = " ".join(words)
+    if REMOTE_SHELL.search(text):
+        return False
+    for segment in text.split("|"):
+        args = segment.split()
+        if args and args[0] == "sudo" and len(args) > 1 and not args[1].startswith("-"):
+            args = args[1:]
+        if not args:
+            return False
+        prog, rest = os.path.basename(args[0]), args[1:]
+        if prog == "systemctl":
+            verbs = [a for a in rest if not a.startswith("-")]
+            if not verbs or verbs[0] not in SYSTEMCTL_READ:
+                return False
+            continue
+        if prog not in REMOTE_READERS:
+            return False
+        if any(_denied(arg, REMOTE_READERS[prog]) for arg in rest):
+            return False
+    return True
+
+
+def _words(cmd: str) -> list:
+    try:
+        return shlex.split(cmd)
+    except ValueError:
+        return []
+
+
+def kubectl_exec_read_only(cmd: str) -> bool:
+    """True for a non-interactive `kubectl exec … -- <cmd>` whose command only reads."""
+    words = _words(cmd)
+    if "--" not in words:
+        return False
+    sep = words.index("--")
+    if any(w in ("-i", "-t", "-it", "-ti", "--stdin", "--tty") or w.startswith(("--stdin=", "--tty="))
+           for w in words[:sep]):
+        return False
+    return remote_read_only(words[sep + 1:])
+
+
+def ssh_read_only(cmd: str) -> bool:
+    """True for `ssh [options] host <cmd>` whose remote command only reads.
+
+    An ssh with no remote command opens a shell, so it is never read-only.
+    """
+    words = _words(cmd)
+    try:
+        i = next(n for n, w in enumerate(words) if os.path.basename(w) == "ssh") + 1
+    except StopIteration:
+        return False
+    while i < len(words) and words[i].startswith("-"):
+        opt = words[i]
+        i += 2 if len(opt) == 2 and opt[1] in SSH_VALUE_OPTS else 1
+    remote = words[i + 1:]
+    # A quoted remote command arrives as one word; split it as the remote shell would.
+    if len(remote) == 1:
+        remote = _words(remote[0])
+    return remote_read_only(remote)
+
+
 def is_read_only(cmd: str, tool: str) -> bool:
-    """True when a kubectl/helm/docker invocation only reads."""
+    """True when a kubectl/helm/docker/ssh invocation only reads."""
+    if tool == "ssh":
+        return ssh_read_only(cmd)
     if tool not in ("kubectl", "helm", "docker"):
         return False
     subs = _subcommands(cmd, tool)
     if not subs:
         return False
     sub = subs[0]
+    if tool == "kubectl" and sub == "exec":
+        return kubectl_exec_read_only(cmd)
     # Two-word forms: `kubectl rollout status` reads, `kubectl rollout undo`
     # does not; `kubectl config view` reads, `kubectl config set-context` does not.
     if sub in TWO_WORD_SUBS:
@@ -196,7 +324,7 @@ def main() -> None:
 
     # Judge each part of a chain on its own, so a read-only first part
     # cannot clear a mutating second part.
-    for part in re.split(r"&&|\|\||[;|\n]", cmd):
+    for part in split_chain(cmd):
         for pattern, label in MUTATORS:
             if not re.search(pattern, part) or is_read_only(part, label):
                 continue
