@@ -4,12 +4,12 @@
 {"guard": "secrets", "label": "list ssh dir", "bash": "ls -la ~/.ssh"}
 {"guard": "secrets", "label": "runtime var-file", "bash": "terraform apply -var-file=prod.tfvars"}
 {"guard": "secrets", "label": "grep docs for prod", "bash": "grep -rn prod docs/"}
-{"guard": "secrets", "label": "read .env.example", "tool": "Read", "file_path": ".env.example", "known_miss": true, "issue": 26}
-{"guard": "secrets", "label": "grep .env.example", "bash": "grep API_KEY .env.example", "known_miss": true, "issue": 26}
-{"guard": "secrets", "label": "cat .env.sample", "bash": "cat .env.sample", "known_miss": true, "issue": 26}
-{"guard": "secrets", "label": "search code for access_token", "bash": "rg access_token src/", "known_miss": true, "issue": 26}
-{"guard": "secrets", "label": "cat refresh_token.py", "bash": "cat src/auth/refresh_token.py", "known_miss": true, "issue": 26}
-{"guard": "secrets", "label": "read refresh_token.py", "tool": "Read", "file_path": "src/auth/refresh_token.py", "known_miss": true, "issue": 26}
+{"guard": "secrets", "label": "read .env.example", "tool": "Read", "file_path": ".env.example"}
+{"guard": "secrets", "label": "grep .env.example", "bash": "grep API_KEY .env.example"}
+{"guard": "secrets", "label": "cat .env.sample", "bash": "cat .env.sample"}
+{"guard": "secrets", "label": "search code for access_token", "bash": "rg access_token src/"}
+{"guard": "secrets", "label": "cat refresh_token.py", "bash": "cat src/auth/refresh_token.py"}
+{"guard": "secrets", "label": "read refresh_token.py", "tool": "Read", "file_path": "src/auth/refresh_token.py"}
 {"guard": "main", "label": "git status", "bash": "git status"}
 {"guard": "main", "label": "git add a named path", "bash": "git add src/main.py"}
 {"guard": "main", "label": "git add -p", "bash": "git add -p"}
@@ -56,3 +56,11 @@
 {"guard": "prod", "label": "cdk synth prod stack", "bash": "cdk synth app-prod"}
 {"guard": "prod", "label": "az verb word inside a resource name", "bash": "az webapp show --name update-svc -g rg-prod"}
 {"guard": "prod", "label": "pulumi preview with an update message", "bash": "pulumi preview --stack production --message \"update tags\""}
+{"guard": "secrets", "label": "cat tfvars.example", "bash": "cat config/app.tfvars.example"}
+{"guard": "secrets", "label": "read .env.template", "tool": "Read", "file_path": "deploy/.env.template"}
+{"guard": "secrets", "label": "sed a .env.dist", "bash": "sed -n 1,20p .env.dist"}
+{"guard": "secrets", "label": "grep code for _token", "bash": "grep -rn _token src/"}
+{"guard": "secrets", "label": "awk program mentions token", "bash": "awk '/csrf_token/ {print FILENAME}' src/app.py"}
+{"guard": "secrets", "label": "read tokenizer.json", "tool": "Read", "file_path": "models/tokenizer.json"}
+{"guard": "secrets", "label": "grep with a context flag value", "bash": "grep -A 3 refresh_token src/"}
+{"guard": "secrets", "label": "awk with a field separator", "bash": "awk -F : '{print $1}' data/api_token_usage.csv"}
