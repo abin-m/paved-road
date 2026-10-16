@@ -81,18 +81,15 @@
 {"guard": "prod", "label": "aws s3 rm prod bucket", "bash": "aws s3 rm s3://prod-logs --recursive", "known_miss": true, "issue": 38}
 {"guard": "prod", "label": "aws ssm send-command", "bash": "aws ssm send-command --instance-ids i-1 --document-name AWS-RunShellScript --comment prod", "known_miss": true, "issue": 38}
 {"guard": "prod", "label": "cdk deploy --all", "bash": "cdk deploy --all --profile default", "known_miss": true, "issue": 38}
-{"guard": "main", "label": "git add --update", "bash": "git add --update"}
-{"guard": "main", "label": "git add -A in a flag cluster", "bash": "git add -Av"}
-{"guard": "main", "label": "git add ./", "bash": "git add ./"}
-{"guard": "main", "label": "git add :/", "bash": "git add :/"}
-{"guard": "main", "label": "git add * glob", "bash": "git add *"}
-{"guard": "main", "label": "git add -- .", "bash": "git add -- ."}
-{"guard": "main", "label": "git -C before add -A", "bash": "git -C ../other add -A"}
-{"guard": "main", "label": "git -C before commit on main", "bash": "git -C . commit -m 'fix: typo'", "branch": "main"}
-{"guard": "main", "label": "commit -a in a flag cluster", "bash": "git commit -qam 'fix: typo'", "branch": "fix/typo"}
-{"guard": "main", "label": "commit -a after the message", "bash": "git commit -m 'fix: typo' -a", "branch": "fix/typo"}
-{"guard": "main", "label": "add -A after a quoted step", "bash": "echo 'done' && git add -A"}
-{"guard": "main", "label": "add -A inside bash -c", "bash": "bash -c 'git add -A'"}
-{"guard": "main", "label": "add . inside eval", "bash": "eval \"git add .\""}
-{"guard": "main", "label": "add -A inside backticks", "bash": "echo `git add -A`"}
-{"guard": "main", "label": "add -A inside $( )", "bash": "echo $(git add -A)"}
+{"guard": "secrets", "label": "cat gh_token", "bash": "cat gh_token"}
+{"guard": "secrets", "label": "read a .token file", "tool": "Read", "file_path": "ci/deploy.token"}
+{"guard": "secrets", "label": "read api_token.json", "tool": "Read", "file_path": "~/.config/app/api_token.json"}
+{"guard": "secrets", "label": "read token.txt", "tool": "Read", "file_path": "token.txt"}
+{"guard": "secrets", "label": "example file under secrets/", "tool": "Read", "file_path": "secrets/db.yml.example"}
+{"guard": "secrets", "label": "rg a pattern in .env", "bash": "rg token .env"}
+{"guard": "secrets", "label": "grep -e in .env", "bash": "grep -e API_KEY .env"}
+{"guard": "secrets", "label": "grep -f reads .env", "bash": "grep -f patterns.txt .env"}
+{"guard": "secrets", "label": "sed prints .env", "bash": "sed -n 1p .env"}
+{"guard": "secrets", "label": "pattern is the secret file name", "bash": "grep -l x .env.production"}
+{"guard": "secrets", "label": "template and real file together", "bash": "cat .env.example .env"}
+{"guard": "secrets", "label": "pattern equal to the secret file", "bash": "grep .env .env"}
