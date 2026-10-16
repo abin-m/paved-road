@@ -23,7 +23,14 @@
 {"guard": "prod", "label": "rollout status in prod", "bash": "kubectl -n prod rollout status deployment/api"}
 {"guard": "prod", "label": "helm get values in production", "bash": "helm -n production get values api"}
 {"guard": "prod", "label": "delete in dev", "bash": "kubectl -n dev delete pod api-1"}
-{"guard": "prod", "label": "kubectl delete, dev current-context", "bash": "kubectl delete deployment api", "env": {"KUBECONFIG": "fixtures/dev-context.yaml"}}
+{"guard": "prod", "label": "kubectl delete, dev current-context", "bash": "kubectl delete deployment api"}
+{"guard": "prod", "label": "dev --context on a prod machine", "bash": "kubectl --context dev-eu delete pod api-1", "kubeconfig": "fixtures/prod-context.yaml"}
+{"guard": "prod", "label": "dev --kube-context on a prod machine", "bash": "helm upgrade api ./chart --kube-context dev-eu", "kubeconfig": "fixtures/prod-context.yaml"}
+{"guard": "prod", "label": "read-only kubectl, prod current-context", "bash": "kubectl get pods", "kubeconfig": "fixtures/prod-context.yaml"}
+{"guard": "prod", "label": "no kubeconfig file", "bash": "kubectl delete pod api-1", "kubeconfig": "fixtures/missing.yaml"}
+{"guard": "prod", "label": "terraform apply, dev workspace", "bash": "terraform apply", "cwd": "fixtures/tf-dev"}
+{"guard": "prod", "label": "terraform apply, default workspace", "bash": "terraform apply"}
+{"guard": "prod", "label": "terraform plan, prod workspace", "bash": "terraform plan", "cwd": "fixtures/tf-prod"}
 {"guard": "prod", "label": "liveness is not live", "bash": "kubectl apply -f k8s/liveness-probe.yaml"}
 {"guard": "prod", "label": "reproduce is not prod", "bash": "pytest tests/test_reproduce.py"}
 {"guard": "prod", "label": "terraform plan prod", "bash": "terraform plan -var-file=prod.tfvars"}

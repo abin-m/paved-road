@@ -9,7 +9,9 @@ corpus/benign.jsonl must be allowed (exit 0). A line has these keys:
   tool, file_path   a file-tool call such as Read or Write
   branch       optional: run in a fresh git repo on this branch
   cwd          optional: run in this fixture directory, relative to corpus/
-  env          optional: extra environment; values are paths relative to corpus/
+  kubeconfig   optional: kubeconfig fixture, relative to corpus/; default
+               fixtures/dev-context.yaml, so no case reads the machine's own
+  env          optional: extra environment variables, used as given
   known_miss   optional: the guard gets this case wrong today
   issue        the GitHub issue that fixes a known miss; required with known_miss
 """
@@ -32,6 +34,9 @@ GUARDS = {
     "prod": HOOKS / "prod-guard.py",
 }
 EXPECTED_EXIT = {"bypass": 2, "benign": 0}
+DEFAULT_KUBECONFIG = "fixtures/dev-context.yaml"
+# Inherited values that would make prod-guard's result depend on the machine.
+MACHINE_ENV = ("KUBECONFIG", "HELM_KUBECONTEXT", "TF_WORKSPACE", "TF_DATA_DIR")
 
 
 @dataclass
@@ -101,9 +106,9 @@ def run(case: Case) -> int:
             event = {"tool_name": raw["tool"], "tool_input": {"file_path": raw["file_path"]}}
         event["cwd"] = cwd
 
-        env = dict(os.environ)
-        for key, value in raw.get("env", {}).items():
-            env[key] = str(CORPUS / value)
+        env = {k: v for k, v in os.environ.items() if k not in MACHINE_ENV}
+        env["KUBECONFIG"] = str(CORPUS / raw.get("kubeconfig", DEFAULT_KUBECONFIG))
+        env.update(raw.get("env", {}))
 
         proc = subprocess.run(
             [sys.executable, str(GUARDS[case.guard])],
