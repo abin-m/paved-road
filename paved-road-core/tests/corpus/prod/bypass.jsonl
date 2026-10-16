@@ -54,7 +54,22 @@
 {"label": "az global flag before the group", "bash": "az --subscription prod-sub aks delete -n api -g rg"}
 {"label": "pulumi global flag before up", "bash": "pulumi --cwd infra up --stack production"}
 {"label": "cdk global flag before deploy", "bash": "cdk --profile prod deploy"}
-{"label": "aws cloudformation deploy prod", "bash": "aws cloudformation deploy --stack-name api-prod --template-file t.yml", "known_miss": true, "issue": 38}
-{"label": "aws s3 rm prod bucket", "bash": "aws s3 rm s3://prod-logs --recursive", "known_miss": true, "issue": 38}
-{"label": "aws ssm send-command", "bash": "aws ssm send-command --instance-ids i-1 --document-name AWS-RunShellScript --comment prod", "known_miss": true, "issue": 38}
-{"label": "cdk deploy --all", "bash": "cdk deploy --all --profile default", "known_miss": true, "issue": 38}
+{"label": "aws cloudformation deploy prod", "bash": "aws cloudformation deploy --stack-name api-prod --template-file t.yml"}
+{"label": "aws s3 rm prod bucket", "bash": "aws s3 rm s3://prod-logs --recursive"}
+{"label": "aws ssm send-command", "bash": "aws ssm send-command --instance-ids i-1 --document-name AWS-RunShellScript --comment prod"}
+{"label": "cdk deploy --all, prod stack in cdk.out", "bash": "cdk deploy --all --profile default", "cwd": "fixtures/cdk-prod"}
+{"label": "aws ec2 run-instances", "bash": "aws ec2 run-instances --image-id ami-1 --profile prod"}
+{"label": "aws lambda invoke", "bash": "aws lambda invoke --function-name api-prod out.json"}
+{"label": "aws s3 cp upload", "bash": "aws s3 cp build/ s3://prod-site/ --recursive"}
+{"label": "aws s3 sync upload", "bash": "aws s3 sync dist/ s3://prod-site"}
+{"label": "aws ec2 stop-instances", "bash": "aws ec2 stop-instances --instance-ids i-1 --profile production"}
+{"label": "aws rds restore", "bash": "aws rds restore-db-instance-from-db-snapshot --db-instance-identifier db-prod --db-snapshot-identifier snap-1"}
+{"label": "aws global option before service", "bash": "aws --profile prod ec2 reboot-instances --instance-ids i-1"}
+{"label": "aws terminate, AWS_PROFILE prod", "bash": "aws ec2 terminate-instances --instance-ids i-1", "env": {"AWS_PROFILE": "prod"}}
+{"label": "pulumi up, prod stack selected", "bash": "pulumi up", "pulumi_stack": "org/api/prod"}
+{"label": "pulumi destroy, prod stack selected", "bash": "pulumi destroy --yes", "pulumi_stack": "org/api/prod"}
+{"label": "cdk deploy, no names, prod stack in cdk.out", "bash": "cdk deploy", "cwd": "fixtures/cdk-prod"}
+{"label": "cdk deploy wildcard, prod stack in cdk.out", "bash": "cdk deploy 'Api*'", "cwd": "fixtures/cdk-prod"}
+{"label": "cdk deploy --all, prod stack in a stage", "bash": "cdk deploy --all", "cwd": "fixtures/cdk-stage"}
+{"label": "cdk deploy --all, AWS_PROFILE prod", "bash": "cdk deploy --all", "env": {"AWS_PROFILE": "prod"}}
+{"label": "cdk deploy a stack whose stackName is prod", "bash": "cdk deploy ApiStack", "cwd": "fixtures/cdk-prod"}

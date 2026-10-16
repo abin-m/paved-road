@@ -13,12 +13,14 @@ file. A line has these keys:
   kubeconfig   optional: kubeconfig fixture, relative to corpus/; default
                fixtures/dev-context.yaml, so no case reads the machine's own
   env          optional: extra environment variables, used as given
+  pulumi_stack optional: run in a Pulumi project with this stack selected
   known_miss   optional: the guard gets this case wrong today
   issue        the GitHub issue that fixes a known miss; required with known_miss
   limit        optional: the guard gets this case wrong by design, and the
                README lists it under what the guards don't stop
 """
 
+import hashlib
 import json
 import os
 import pathlib
@@ -41,7 +43,8 @@ BASH_GUARDS = HOOKS / "bash-guards.py"
 EXPECTED_EXIT = {"bypass": 2, "benign": 0}
 DEFAULT_KUBECONFIG = "fixtures/dev-context.yaml"
 # Inherited values that would make prod-guard's result depend on the machine.
-MACHINE_ENV = ("KUBECONFIG", "HELM_KUBECONTEXT", "TF_WORKSPACE", "TF_DATA_DIR")
+MACHINE_ENV = ("KUBECONFIG", "HELM_KUBECONTEXT", "TF_WORKSPACE", "TF_DATA_DIR",
+               "AWS_PROFILE", "AWS_DEFAULT_PROFILE", "PULUMI_HOME")
 
 
 @dataclass
@@ -108,6 +111,19 @@ def run(case: Case, script: pathlib.Path = None) -> int:
             _git(tmp, "-c", "user.name=test", "-c", "user.email=test@example.com",
                  "commit", "-q", "--allow-empty", "-m", "init")
 
+        pulumi_home = os.path.join(tmp, "pulumi-home")
+        if "pulumi_stack" in raw:
+            # Pulumi keeps the selected stack in a file named after the sha1
+            # of the project file's real path, so it is built here.
+            project = os.path.join(tmp, "Pulumi.yaml")
+            with open(project, "w", encoding="utf-8") as fh:
+                fh.write("name: api\nruntime: python\n")
+            digest = hashlib.sha1(os.path.realpath(project).encode()).hexdigest()
+            os.makedirs(os.path.join(pulumi_home, "workspaces"))
+            with open(os.path.join(pulumi_home, "workspaces", f"api-{digest}-workspace.json"),
+                      "w", encoding="utf-8") as fh:
+                json.dump({"stacks": {"https://api.pulumi.com": raw["pulumi_stack"]}}, fh)
+
         if "bash" in raw:
             event = {"tool_name": "Bash", "tool_input": {"command": raw["bash"]}}
         else:
@@ -116,6 +132,7 @@ def run(case: Case, script: pathlib.Path = None) -> int:
 
         env = {k: v for k, v in os.environ.items() if k not in MACHINE_ENV}
         env["KUBECONFIG"] = str(CORPUS / raw.get("kubeconfig", DEFAULT_KUBECONFIG))
+        env["PULUMI_HOME"] = pulumi_home
         env.update(raw.get("env", {}))
 
         proc = subprocess.run(

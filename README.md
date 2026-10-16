@@ -87,9 +87,9 @@ A guard does not stop:
 - An agent that types `PROD_OK=1`. The prefix lets a production change through on purpose, and it stays in the transcript, where you can see it. The working style tells the agent to ask you first.
 - A secret read through a program the guard doesn't know, such as `python3 -c`, `base64`, `jq` or `source .env`.
 - A secret file copied to a new name in one command and read in the next.
-- A `KUBECONFIG` or `TF_WORKSPACE` exported by an earlier command. The guard sees only the environment Claude Code started with.
+- A `KUBECONFIG`, `TF_WORKSPACE` or `AWS_PROFILE` exported by an earlier command. The guard sees only the environment Claude Code started with.
+- A CDK stack added since the app was last synthesised. For `cdk deploy --all`, the guard reads the stack names in `cdk.out`, so it doesn't see a stack that isn't there yet.
 - A production environment whose name contains none of the words in [Who this is for](#who-this-is-for).
-- The open gaps in [#38](https://github.com/abin-m/paved-road/issues/38): some AWS writes, `pulumi up` with a production stack selected, and `cdk deploy --all`.
 
 Report any other way past a guard as a security problem. See [SECURITY.md](SECURITY.md).
 
