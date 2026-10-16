@@ -67,6 +67,28 @@ REMOTE_SHELL = re.compile(r"[;&<>`]|\$\(")
 # ssh options that take a value, so the value is not mistaken for the host.
 SSH_VALUE_OPTS = set("bcDEeFIiJLlmOoPpQRSWw")
 
+# An aws operation that starts with one of these only reads. Any other
+# operation is treated as a write, so a new AWS verb is blocked, not missed.
+AWS_READ_PREFIXES = (
+    "describe", "list", "get", "head", "search", "query", "scan", "select", "lookup",
+    "validate", "estimate", "simulate", "batch-get", "filter", "tail", "wait", "help",
+    "preview", "test", "check", "detect", "login", "logout", "decode", "verify",
+)
+# aws operations that only write to this machine, such as ~/.kube/config.
+AWS_LOCAL_OPS = {"update-kubeconfig"}
+# aws commands that only touch local configuration.
+AWS_LOCAL_SERVICES = {"configure", "help", "history"}
+# aws global options that take the next word as their value.
+AWS_VALUE_OPTS = {"--profile", "--region", "--output", "--query", "--endpoint-url",
+                  "--ca-bundle", "--cli-read-timeout", "--cli-connect-timeout", "--color",
+                  "--cli-binary-format"}
+# cdk options that take the next word as their value, so it is not read as a stack name.
+CDK_VALUE_OPTS = {"--profile", "-a", "--app", "-o", "--output", "-c", "--context",
+                  "--parameters", "--require-approval", "-r", "--role-arn",
+                  "--toolkit-stack-name", "-O", "--outputs-file", "--notification-arns",
+                  "-t", "--tags", "-m", "--method", "--change-set-name", "--concurrency",
+                  "--asset-parallelism", "-E", "--build-exclude", "-p", "--plugin"}
+
 # (regex over the command, human label)
 MUTATORS = [
     (r"\bkubectl\b", "kubectl"),
@@ -76,7 +98,8 @@ MUTATORS = [
     (r"\bansible-playbook\b", "ansible-playbook"),
     (r"\bssh\b", "ssh"),
     (r"\b(scp|rsync)\b", "file transfer"),
-    (r"\baws\s+\w+\s+(delete|create|update|put|terminate|modify|attach|detach)", "aws cli"),
+    # Every aws call; is_read_only() lets the reads through.
+    (r"\baws\s", "aws cli"),
     (r"\bgcloud\s+\w+\s+(delete|create|update|deploy)", "gcloud"),
     # For az, pulumi and cdk the verb can follow command groups and global
     # options (`az --subscription x deployment group create`), so any words may
@@ -219,10 +242,52 @@ def ssh_read_only(cmd: str) -> bool:
     return remote_read_only(remote)
 
 
+def _after(words: list, program: str) -> list:
+    """The words after `program` in a word list, or [] if it is not there."""
+    for n, w in enumerate(words):
+        if os.path.basename(w) == program:
+            return words[n + 1:]
+    return []
+
+
+def _bare(words: list, value_opts: set) -> list:
+    """Words that are neither options nor the values of options in value_opts."""
+    bare, i = [], 0
+    while i < len(words):
+        w = words[i]
+        if w.startswith("-"):
+            i += 2 if w in value_opts else 1
+            continue
+        bare.append(w)
+        i += 1
+    return bare
+
+
+def aws_read_only(cmd: str) -> bool:
+    """True when an aws call only reads, or only changes this machine."""
+    bare = _bare(_after(_words(cmd), "aws"), AWS_VALUE_OPTS)
+    if not bare:
+        return True  # `aws --version` and the like
+    service, op, args = bare[0], (bare[1] if len(bare) > 1 else ""), bare[2:]
+    if service in AWS_LOCAL_SERVICES or op in AWS_LOCAL_OPS:
+        return True
+    if service == "s3":
+        if op in ("ls", "presign"):
+            return True
+        if op in ("cp", "sync"):
+            # A copy writes to its destination, so it writes to S3 only when
+            # an S3 path comes after the source.
+            return not any(a.startswith("s3://") for a in args[1:])
+        return False
+    return op.startswith(AWS_READ_PREFIXES)
+
+
 def is_read_only(cmd: str, tool: str) -> bool:
-    """True when a kubectl/helm/docker/ssh invocation only reads."""
+    """True when a kubectl/helm/docker/ssh/aws invocation only reads."""
     if tool == "ssh":
         return ssh_read_only(cmd)
+    if tool == "aws cli":
+        return aws_read_only(cmd)
     if tool not in ("kubectl", "helm", "docker"):
         return False
     subs = _subcommands(cmd, tool)
@@ -270,6 +335,73 @@ def _current_context(kubeconfig: str) -> str:
     return ""
 
 
+def _aws_profile(cmd: str) -> str:
+    """The AWS profile a command uses: --profile, then AWS_PROFILE."""
+    return (_flag_value(cmd, "--profile") or _inline_env(cmd, "AWS_PROFILE")
+            or os.environ.get("AWS_PROFILE") or os.environ.get("AWS_DEFAULT_PROFILE", ""))
+
+
+def _pulumi_stacks(cwd: str) -> list:
+    """Stacks selected in Pulumi's workspace file for the project above cwd.
+
+    Pulumi names the file after the sha1 of the project file's real path.
+    The backend in use is not known here, so every selected stack counts.
+    """
+    directory = os.path.abspath(cwd)
+    while True:
+        for name in ("Pulumi.yaml", "Pulumi.yml", "Pulumi.json"):
+            project = os.path.join(directory, name)
+            if os.path.isfile(project):
+                break
+        else:
+            parent = os.path.dirname(directory)
+            if parent == directory:
+                return []
+            directory = parent
+            continue
+        break
+    try:
+        with open(project, encoding="utf-8") as fh:
+            m = re.search(r"""^\s*"?name"?\s*:\s*["']?([^"',\s#]+)""", fh.read(), re.MULTILINE)
+        if not m:
+            return []
+        import hashlib  # here, not at the top: it costs ~7 ms on every Bash call
+
+        digest = hashlib.sha1(os.path.realpath(project).encode()).hexdigest()
+        home = os.environ.get("PULUMI_HOME") or os.path.join(os.path.expanduser("~"), ".pulumi")
+        path = os.path.join(home, "workspaces", f"{m.group(1)}-{digest}-workspace.json")
+        with open(path, encoding="utf-8") as fh:
+            settings = json.load(fh)
+    except (OSError, ValueError):
+        return []
+    stacks = list((settings.get("stacks") or {}).values())
+    return stacks + ([settings["stack"]] if settings.get("stack") else [])
+
+
+def _cdk_stacks(directory: str, depth: int = 0) -> list:
+    """Each stack in a synthesised CDK app, as the list of names it goes by.
+
+    The names are the artifact ID, the display name, the CloudFormation stack
+    name, and the stage it sits in, following nested stage assemblies.
+    """
+    try:
+        with open(os.path.join(directory, "manifest.json"), encoding="utf-8") as fh:
+            artifacts = json.load(fh).get("artifacts") or {}
+    except (OSError, ValueError, AttributeError):
+        return []
+    stacks = []
+    for artifact_id, artifact in artifacts.items():
+        props = artifact.get("properties") or {}
+        if artifact.get("type") == "aws:cloudformation:stack":
+            names = [artifact_id, artifact.get("displayName", ""), props.get("stackName", "")]
+            stacks.append([n for n in names if n])
+        elif artifact.get("type") == "cdk:cloud-assembly" and depth < 3:
+            stage = [artifact_id, props.get("displayName", "")]
+            for names in _cdk_stacks(os.path.join(directory, props.get("directoryName", "")), depth + 1):
+                stacks.append(names + [n for n in stage if n])
+    return stacks
+
+
 def implicit_target(cmd: str, tool: str, cwd: str) -> str:
     """The prod environment a command reaches without naming it, or "".
 
@@ -303,6 +435,34 @@ def implicit_target(cmd: str, tool: str, cwd: str) -> str:
             except OSError:
                 return ""
         return f"terraform workspace {workspace}" if PROD_RE.search(workspace) else ""
+
+    if tool == "aws cli":
+        profile = _aws_profile(cmd)
+        return f"AWS profile {profile}" if PROD_RE.search(profile) else ""
+
+    if tool == "pulumi":
+        if _flag_value(cmd, "--stack", "-s"):
+            return ""  # an explicit stack that is not prod
+        root = os.path.join(cwd, _flag_value(cmd, "--cwd", "-C"))
+        prod = [s for s in _pulumi_stacks(root) if PROD_RE.search(s)]
+        return f"pulumi stack {prod[0]}" if prod else ""
+
+    if tool == "cdk":
+        profile = _aws_profile(cmd)
+        if PROD_RE.search(profile):
+            return f"AWS profile {profile}"
+        words = _after(_words(cmd), "cdk")
+        names = _bare(words, CDK_VALUE_OPTS)[1:]  # after the verb
+        app = _flag_value(cmd, "--app", "-a")
+        out = app if app and os.path.isdir(os.path.join(cwd, app)) else (
+            _flag_value(cmd, "--output", "-o") or "cdk.out")
+        stacks = _cdk_stacks(os.path.join(cwd, out))
+        if names and "--all" not in words and not any("*" in n for n in names):
+            # Named stacks: a name such as ApiStack can still deploy a stack
+            # whose CloudFormation name is prod.
+            stacks = [s for s in stacks if set(s[:2]) & set(names)]
+        prod = [n for s in stacks for n in s if PROD_RE.search(n)]
+        return f"cdk stack {prod[0]}" if prod else ""
 
     return ""
 

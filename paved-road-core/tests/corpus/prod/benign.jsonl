@@ -37,3 +37,22 @@
 {"label": "cdk synth prod stack", "bash": "cdk synth app-prod"}
 {"label": "az verb word inside a resource name", "bash": "az webapp show --name update-svc -g rg-prod"}
 {"label": "pulumi preview with an update message", "bash": "pulumi preview --stack production --message \"update tags\""}
+{"label": "aws s3 ls prod bucket", "bash": "aws s3 ls s3://prod-logs/"}
+{"label": "aws s3 cp download", "bash": "aws s3 cp s3://prod-logs/app.log ."}
+{"label": "aws ec2 describe-instances prod", "bash": "aws ec2 describe-instances --profile prod"}
+{"label": "aws logs tail prod", "bash": "aws logs tail /aws/lambda/api-prod --follow"}
+{"label": "aws sts get-caller-identity prod", "bash": "aws sts get-caller-identity --profile prod"}
+{"label": "aws eks update-kubeconfig prod", "bash": "aws eks update-kubeconfig --name prod-cluster"}
+{"label": "aws sso login prod", "bash": "aws sso login --profile prod"}
+{"label": "aws configure list prod", "bash": "aws configure list --profile prod"}
+{"label": "aws cloudformation describe-stacks prod", "bash": "aws cloudformation describe-stacks --stack-name api-prod"}
+{"label": "aws dynamodb scan prod", "bash": "aws dynamodb scan --table-name orders-prod"}
+{"label": "aws terminate, AWS_PROFILE dev", "bash": "aws ec2 terminate-instances --instance-ids i-1", "env": {"AWS_PROFILE": "dev"}}
+{"label": "pulumi up, dev stack selected", "bash": "pulumi up", "pulumi_stack": "org/api/dev"}
+{"label": "pulumi up --stack dev, prod selected", "bash": "pulumi up --stack dev", "pulumi_stack": "org/api/prod"}
+{"label": "pulumi preview, prod selected", "bash": "pulumi preview", "pulumi_stack": "org/api/prod"}
+{"label": "pulumi up, no workspace", "bash": "pulumi up"}
+{"label": "cdk deploy --all, dev stacks only", "bash": "cdk deploy --all", "cwd": "fixtures/cdk-dev"}
+{"label": "cdk deploy a named dev stack", "bash": "cdk deploy ApiStack-dev", "cwd": "fixtures/cdk-prod"}
+{"label": "cdk deploy --all, no cdk.out", "bash": "cdk deploy --all"}
+{"label": "cdk synth, prod stack in cdk.out", "bash": "cdk synth", "cwd": "fixtures/cdk-prod"}

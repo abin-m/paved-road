@@ -1,0 +1,12 @@
+{
+  "version": "36.0.0",
+  "artifacts": {
+    "assembly-Release": {
+      "type": "cdk:cloud-assembly",
+      "properties": {
+        "directoryName": "assembly-Release",
+        "displayName": "Release"
+      }
+    }
+  }
+}
