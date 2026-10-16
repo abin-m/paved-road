@@ -15,6 +15,8 @@ file. A line has these keys:
   env          optional: extra environment variables, used as given
   known_miss   optional: the guard gets this case wrong today
   issue        the GitHub issue that fixes a known miss; required with known_miss
+  limit        optional: the guard gets this case wrong by design, and the
+               README lists it under what the guards don't stop
 """
 
 import json
@@ -59,7 +61,12 @@ class Case:
 
     @property
     def known_miss(self) -> bool:
-        return bool(self.raw.get("known_miss"))
+        """True for a known miss or a documented limit: the guard gets it wrong."""
+        return bool(self.raw.get("known_miss") or self.raw.get("limit"))
+
+    @property
+    def limit(self) -> bool:
+        return bool(self.raw.get("limit"))
 
 
 def load() -> list:
@@ -79,6 +86,8 @@ def load() -> list:
                     raise ValueError(f"{where}: needs 'bash', or 'tool' and 'file_path'")
                 if raw.get("known_miss") and not raw.get("issue"):
                     raise ValueError(f"{where}: a known miss needs the issue that fixes it")
+                if raw.get("known_miss") and raw.get("limit"):
+                    raise ValueError(f"{where}: a case is a known miss or a limit, not both")
                 cases.append(Case(guard, kind, raw, where))
     return cases
 

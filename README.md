@@ -6,6 +6,16 @@
 
 A Claude Code plugin pack for platform, DevOps and security work. Install it once, and every repo you open gets the same skills, GitHub scripts and safety hooks.
 
+## Who this is for
+
+The pack fits a team that:
+
+- keeps its code on GitHub and makes each change on a branch, through a pull request
+- runs infrastructure with Kubernetes, Helm, Terraform, Ansible, Pulumi, CDK, or the AWS, Azure or Google Cloud CLIs
+- names its production and staging environments with one of these words: `prod`, `production`, `prd`, `live`, `staging`, `stage`, `stg` or `preprod`
+
+On GitLab or Bitbucket, the guards and most skills still work. The GitHub scripts and the `planning-flow` and `token-setup` skills don't.
+
 ## Quick start
 
 You need `git`, and `python3` on your PATH.
@@ -50,7 +60,7 @@ The pack adds four kinds of part to a Claude Code session. Each part runs at a d
 
 - The session hook prints `working-style.md` when a session starts, so every session begins with the same rules.
 - A skill loads only when a task matches its description. Until then, only its one-line description is in context.
-- A guard runs before every matching tool call. It can stop the call, and the model cannot talk its way past it.
+- A guard runs before every matching tool call and can stop it. A guard checks the command itself, so the agent can't argue its way past one. It only knows the forms of a command it was written for, though. See [what the guards don't stop](#what-the-guards-stop-and-what-they-dont).
 - Scripts call the GitHub API with a token that `gh-token` reads from the OS keychain. The value goes to the shell, not to the transcript.
 
 ### Guards
@@ -65,6 +75,23 @@ Claude Code passes each tool call to the guards as JSON. A guard that exits with
 This is the guards' real output for three blocked calls and one allowed call:
 
 ![Guard output for a blocked secret read, bulk staging, a production kubectl, and an allowed PROD_OK call](docs/images/guards-in-action.svg)
+
+### What the guards stop, and what they don't
+
+The guards stop the usual ways an agent makes four mistakes: reading a secret file, staging the whole tree, committing on a default branch and changing production. To see how many of the test commands each guard catches, run `python3 tools/bench.py`.
+
+The guards don't replace access control. Give the agent's credentials only the access its task needs.
+
+A guard does not stop:
+
+- An agent that types `PROD_OK=1`. The prefix lets a production change through on purpose, and it stays in the transcript, where you can see it. The working style tells the agent to ask you first.
+- A secret read through a program the guard doesn't know, such as `python3 -c`, `base64`, `jq` or `source .env`.
+- A secret file copied to a new name in one command and read in the next.
+- A `KUBECONFIG` or `TF_WORKSPACE` exported by an earlier command. The guard sees only the environment Claude Code started with.
+- A production environment whose name contains none of the words in [Who this is for](#who-this-is-for).
+- The open gaps in [#38](https://github.com/abin-m/paved-road/issues/38): some AWS writes, `pulumi up` with a production stack selected, and `cdk deploy --all`.
+
+Report any other way past a guard as a security problem. See [SECURITY.md](SECURITY.md).
 
 ### The work loop
 

@@ -6,7 +6,8 @@ benign.jsonl (must exit 0); corpus_lib.py documents the format. Each Bash
 case also runs through bash-guards.py, the hook Claude Code runs, which
 applies all three guards: a benign command must pass all of them. A known miss passes while
 the guard still gets it wrong, and fails once the guard is fixed, so the
-known_miss flag is removed in the same change. The working-style hook blocks
+known_miss flag is removed in the same change. A documented limit works the
+same way. The working-style hook blocks
 nothing, so its case asserts what it prints.
 
     python3 paved-road-core/tests/guards.test.py
@@ -54,11 +55,12 @@ def main() -> int:
         if case.known_miss and not correct:
             status = "MISS"
             misses += 1
-            note = f"known miss, #{case.raw['issue']}"
+            note = "documented limit" if case.limit else f"known miss, #{case.raw['issue']}"
         elif case.known_miss:
             status = "FAIL"
             failures += 1
-            note = f"now correct: remove known_miss from {case.where}"
+            flag = "limit" if case.limit else "known_miss"
+            note = f"now correct: remove {flag} from {case.where}"
         else:
             status = "PASS" if correct else "FAIL"
             failures += not correct
