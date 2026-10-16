@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Config
+current-context: dev-eu
+contexts:
+  - name: dev-eu
+    context:
+      cluster: dev-eu
+      namespace: default
+clusters:
+  - name: dev-eu
+    cluster:
+      server: https://dev.example.com
+users: []

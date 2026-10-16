@@ -13,11 +13,15 @@ paved-road-core/
   hooks/working-style.py            # prints working-style.md at session start
   working-style.md                  # rules added to every session
   bin/                              # scripts, on PATH once the plugin is installed
-  tests/guards.test.py              # hook tests
+  tests/guards.test.py              # runs the guard corpus and the session hook
+  tests/corpus/bypass.jsonl         # commands a guard must block
+  tests/corpus/benign.jsonl         # commands a guard must allow
+  tests/corpus_lib.py               # loads and runs corpus cases; documents the format
   tests/tools.test.py               # script tests
   rules/                            # rule files a repo can copy into .claude/rules/
 tools/lint.py                       # checks manifests, frontmatter and hook wiring
 tools/doctor.py                     # checks the hooks work on this machine
+tools/bench.py                      # scores each guard against the corpus
 .github/workflows/                  # ci.yml and release.yml
 ```
 
@@ -29,6 +33,7 @@ python3 paved-road-core/tests/guards.test.py
 python3 paved-road-core/tests/tools.test.py
 python3 paved-road-core/bin/prose-check .
 python3 tools/doctor.py
+python3 tools/bench.py
 ```
 
 Lint fails when:
@@ -47,7 +52,7 @@ Lint fails when:
 |---|---|---|
 | A procedure | `skills/<name>/SKILL.md` | A `description` that says when to use it. Only that line loads at session start. |
 | A persona | `agents/<name>.md` | The shortest `tools` list that does the job. |
-| A hard rule | `hooks/<name>-guard.py` | An entry in `hooks.json`, plus a blocked case and an allowed case in `guards.test.py`. |
+| A hard rule | `hooks/<name>-guard.py` | An entry in `hooks.json`, its name in `guards.test.py`, and cases in `tests/corpus/bypass.jsonl` and `benign.jsonl`. |
 | A script | `bin/<name>` | A shebang, the executable bit and a case in `tools.test.py`. |
 
 Run `prose-check` on any Markdown you add.
@@ -61,11 +66,19 @@ Bump `version` in `plugin.json` when a change is worth pulling.
 - The pack holds what is useful in two or more repos. Knowledge about one repo goes in that repo's `CLAUDE.md` or `.claude/skills/`.
 - The pack has no employer paths, tokens or hostnames. Keep team conventions in a second plugin beside `paved-road-core`.
 
+## Guard corpus
+
+Each line in `tests/corpus/bypass.jsonl` is a command a guard must block. Each line in `benign.jsonl` is one it must allow. `tests/corpus_lib.py` lists the keys.
+
+When a guard gets a case wrong today, mark the line `"known_miss": true` and give the issue that fixes it. The test passes while the guard is still wrong, and fails once it is right, so remove the flag in the same change as the fix.
+
+`bench.py` prints, per guard, the bypasses it catches, the benign commands it blocks, its known misses and the time one call adds. Put its table in the release notes when a guard changes.
+
 ## CI
 
 `ci.yml` runs on every pull request and on every push to `main`.
 
-- The `test` job runs the first four local checks on Ubuntu, macOS and Windows, with Python 3.9 and 3.13.
+- The `test` job runs the first four local checks and `bench.py` on Ubuntu, macOS and Windows. It uses Python 3.9 and 3.13. `bench.py` only reports, so it never fails the job.
 - The `hook-invocation` job runs the `python3 <script>` command line from `hooks.json`. It fails if a secret read is not blocked.
 
 `release.yml` runs when a `v*` tag is pushed. It checks that the tag matches `version` in `plugin.json`, runs the checks again, and creates a GitHub Release with generated notes.
