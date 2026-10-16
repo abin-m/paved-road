@@ -28,6 +28,8 @@ BLOCKING_CASES = [
         "prod-guard.py",
         {"tool_name": "Bash", "tool_input": {"command": "kubectl -n prod delete pod api"}},
     ),
+    # The hook hooks.json actually runs for Bash.
+    ("bash-guards.py", {"tool_name": "Bash", "tool_input": {"command": "git add -A"}}),
 ]
 
 # Printed into every session by the SessionStart hook.

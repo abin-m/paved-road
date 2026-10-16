@@ -113,6 +113,7 @@ Skills load when a task matches. You can also call one as `/paved-road-core:<nam
 | `secrets-guard` | Blocks reading `.env`, `*.tfvars`, kubeconfigs, private keys and `secrets/`. |
 | `main-guard` | Blocks commits on a default branch, and `git add -A`. |
 | `prod-guard` | Blocks changes to prod or staging, whether the command names it or the current kube context or Terraform workspace points at it. |
+| `bash-guards` | Runs the three guards above for each Bash call, in one process. |
 
 ## Usage
 

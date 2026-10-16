@@ -132,6 +132,11 @@ def check_hooks() -> None:
     wired = set(re.findall(r"hooks/([a-z0-9-]+\.py)", raw))
 
     on_disk = {p.name for p in (PLUGIN / "hooks").glob("*.py")}
+    # A guard that a wired hook loads, such as bash-guards.py loading
+    # prod-guard.py, runs too.
+    for name in sorted(wired & on_disk):
+        src = (PLUGIN / "hooks" / name).read_text(encoding="utf-8")
+        wired |= set(re.findall(r"[a-z0-9]+(?:-[a-z0-9]+)*-guard\.py", src)) - {name}
     for name in sorted(wired - on_disk):
         err(f"hooks.json wires hooks/{name} but the file does not exist")
     for name in sorted(on_disk - wired):
