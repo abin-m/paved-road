@@ -48,3 +48,19 @@
 {"guard": "prod", "label": "az aks delete prod", "bash": "az aks delete -n prod-cluster -g rg", "known_miss": true, "issue": 25}
 {"guard": "prod", "label": "pulumi up production", "bash": "pulumi up --stack production", "known_miss": true, "issue": 25}
 {"guard": "prod", "label": "cdk deploy prod stack", "bash": "cdk deploy app-prod", "known_miss": true, "issue": 25}
+{"guard": "prod", "label": "kubectl exec bash in prod", "bash": "kubectl -n prod exec -it api-1 -- bash"}
+{"guard": "prod", "label": "kubectl exec through sh -c", "bash": "kubectl -n prod exec api-1 -- sh -c 'curl localhost'"}
+{"guard": "prod", "label": "kubectl exec curl POST", "bash": "kubectl -n prod exec api-1 -- curl -X POST localhost/admin/flush"}
+{"guard": "prod", "label": "kubectl exec without --", "bash": "kubectl -n prod exec api-1 ps"}
+{"guard": "prod", "label": "ssh restart a service", "bash": "ssh prod-db-01 sudo systemctl restart api"}
+{"guard": "prod", "label": "ssh read then delete", "bash": "ssh prod-db-01 'tail /var/log/syslog; rm -rf /tmp/x'"}
+{"guard": "prod", "label": "ssh pipe into kill", "bash": "ssh prod-db-01 'ps aux | xargs kill'"}
+{"guard": "prod", "label": "ssh redirect writes a file", "bash": "ssh prod-db-01 'tail /var/log/syslog > /tmp/copy'"}
+{"guard": "prod", "label": "ssh journalctl vacuum", "bash": "ssh prod-db-01 journalctl --vacuum-size=1M"}
+{"guard": "prod", "label": "ssh curl with data", "bash": "ssh prod-db-01 \"curl -d x localhost/api\""}
+{"guard": "prod", "label": "ssh command substitution", "bash": "ssh prod-db-01 'cat $(rm -f /tmp/x)'"}
+{"guard": "prod", "label": "curl POST in a short-flag cluster", "bash": "kubectl -n prod exec api-1 -- curl -sXPOST localhost/admin/flush"}
+{"guard": "prod", "label": "curl --json sends a POST", "bash": "kubectl -n prod exec api-1 -- curl --json '{}' localhost/admin"}
+{"guard": "prod", "label": "ssh date -s sets the clock", "bash": "ssh prod-db-01 date -s 2020-01-01"}
+{"guard": "prod", "label": "ssh ss -K kills sockets", "bash": "ssh prod-db-01 ss -K dst 10.0.0.1"}
+{"guard": "prod", "label": "ssh hostname renames the host", "bash": "ssh prod-db-01 hostname db-02"}
