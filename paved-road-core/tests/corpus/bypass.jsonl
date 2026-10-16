@@ -20,7 +20,7 @@
 {"guard": "main", "label": "git commit -am", "bash": "git commit -am 'x'"}
 {"guard": "main", "label": "commit on main", "bash": "git commit -m 'fix: typo'", "branch": "main"}
 {"guard": "main", "label": "commit on master", "bash": "git commit -m 'fix: typo'", "branch": "master"}
-{"guard": "main", "label": "git add -u", "bash": "git add -u", "known_miss": true, "issue": 27}
+{"guard": "main", "label": "git add -u", "bash": "git add -u"}
 {"guard": "prod", "label": "kubectl delete in prod", "bash": "kubectl -n prod delete pod api-1"}
 {"guard": "prod", "label": "kubectl delete, namespace= form", "bash": "kubectl --namespace=production delete pod api-1"}
 {"guard": "prod", "label": "kubectl apply -k production overlay", "bash": "kubectl apply -k overlays/production"}
@@ -81,3 +81,18 @@
 {"guard": "prod", "label": "aws s3 rm prod bucket", "bash": "aws s3 rm s3://prod-logs --recursive", "known_miss": true, "issue": 38}
 {"guard": "prod", "label": "aws ssm send-command", "bash": "aws ssm send-command --instance-ids i-1 --document-name AWS-RunShellScript --comment prod", "known_miss": true, "issue": 38}
 {"guard": "prod", "label": "cdk deploy --all", "bash": "cdk deploy --all --profile default", "known_miss": true, "issue": 38}
+{"guard": "main", "label": "git add --update", "bash": "git add --update"}
+{"guard": "main", "label": "git add -A in a flag cluster", "bash": "git add -Av"}
+{"guard": "main", "label": "git add ./", "bash": "git add ./"}
+{"guard": "main", "label": "git add :/", "bash": "git add :/"}
+{"guard": "main", "label": "git add * glob", "bash": "git add *"}
+{"guard": "main", "label": "git add -- .", "bash": "git add -- ."}
+{"guard": "main", "label": "git -C before add -A", "bash": "git -C ../other add -A"}
+{"guard": "main", "label": "git -C before commit on main", "bash": "git -C . commit -m 'fix: typo'", "branch": "main"}
+{"guard": "main", "label": "commit -a in a flag cluster", "bash": "git commit -qam 'fix: typo'", "branch": "fix/typo"}
+{"guard": "main", "label": "commit -a after the message", "bash": "git commit -m 'fix: typo' -a", "branch": "fix/typo"}
+{"guard": "main", "label": "add -A after a quoted step", "bash": "echo 'done' && git add -A"}
+{"guard": "main", "label": "add -A inside bash -c", "bash": "bash -c 'git add -A'"}
+{"guard": "main", "label": "add . inside eval", "bash": "eval \"git add .\""}
+{"guard": "main", "label": "add -A inside backticks", "bash": "echo `git add -A`"}
+{"guard": "main", "label": "add -A inside $( )", "bash": "echo $(git add -A)"}

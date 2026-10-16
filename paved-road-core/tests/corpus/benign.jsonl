@@ -16,7 +16,7 @@
 {"guard": "main", "label": "git log --all", "bash": "git log --all --oneline"}
 {"guard": "main", "label": "commit on a topic branch", "bash": "git commit -m 'fix: typo'", "branch": "fix/typo"}
 {"guard": "main", "label": "amend on a topic branch", "bash": "git commit --amend --no-edit", "branch": "fix/typo"}
-{"guard": "main", "label": "commit message mentions -a", "bash": "git commit -m \"remove the -a flag\"", "branch": "fix/typo", "known_miss": true, "issue": 27}
+{"guard": "main", "label": "commit message mentions -a", "bash": "git commit -m \"remove the -a flag\"", "branch": "fix/typo"}
 {"guard": "prod", "label": "kubectl get in prod", "bash": "kubectl -n prod get pods"}
 {"guard": "prod", "label": "kubectl logs in prod", "bash": "kubectl -n prod logs api-1 --previous"}
 {"guard": "prod", "label": "kubectl get, prod context flag", "bash": "kubectl --context prod-eu get nodes"}
@@ -56,3 +56,9 @@
 {"guard": "prod", "label": "cdk synth prod stack", "bash": "cdk synth app-prod"}
 {"guard": "prod", "label": "az verb word inside a resource name", "bash": "az webapp show --name update-svc -g rg-prod"}
 {"guard": "prod", "label": "pulumi preview with an update message", "bash": "pulumi preview --stack production --message \"update tags\""}
+{"guard": "main", "label": "commit message starts with -a", "bash": "git commit -m \"-a is gone\"", "branch": "fix/typo"}
+{"guard": "main", "label": "amend with a message mentioning all", "bash": "git commit --amend -m 'update all docs'", "branch": "fix/typo"}
+{"guard": "main", "label": "add a file whose name has -A", "bash": "git add 'notes -A.txt'"}
+{"guard": "main", "label": "git stash -u", "bash": "git stash push -u"}
+{"guard": "main", "label": "git -C add a named path", "bash": "git -C ../other add src/main.py"}
+{"guard": "main", "label": "commit message quotes git add -A", "bash": "git commit -m 'stop using git add -A'", "branch": "fix/typo"}
