@@ -2,7 +2,8 @@
 """tools/bench.py — score each guard against the command corpus.
 
 Prints, per guard: how many bypass commands it blocks, how many benign
-commands it wrongly blocks, its known misses, and the time one call adds.
+commands it wrongly blocks, its known misses and documented limits, and the
+time one call adds.
 The last line is the time a Bash call pays: bash-guards.py running all three.
 
 This script reports and always exits 0. tests/guards.test.py is the gate.
@@ -79,9 +80,10 @@ def main() -> int:
     misses = [c for s in stats.values() for c in s["misses"]]
     if misses:
         print("\nKnown misses:")
-        for c in sorted(misses, key=lambda c: (c.raw["issue"], c.guard)):
+        for c in sorted(misses, key=lambda c: (c.raw.get("issue", 0), c.guard)):
             wrong = "not blocked" if c.kind == "bypass" else "blocked"
-            print(f"  #{c.raw['issue']:<3} {c.guard:8} {wrong:11} {c.label}")
+            where = "limit" if c.limit else f"#{c.raw['issue']}"
+            print(f"  {where:<5} {c.guard:8} {wrong:11} {c.label}")
     return 0
 
 

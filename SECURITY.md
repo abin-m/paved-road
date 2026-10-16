@@ -15,6 +15,6 @@ Do not open a public issue for a security problem.
 
 Report it privately through [GitHub private vulnerability reporting](https://github.com/abin-m/paved-road/security/advisories/new).
 
-Include the affected file or hook, the steps to reproduce it and the impact. A guard that fails open, for example one that lets a secret read through, counts as a security problem.
+Include the affected file or hook, the steps to reproduce it and the impact. A way past a guard, for example one that lets a secret read through, counts as a security problem. The exception is a gap the README lists under [what the guards don't stop](README.md#what-the-guards-stop-and-what-they-dont).
 
 You will get a reply within seven days. Once a fix is released, the advisory is published and you are credited unless you ask otherwise.

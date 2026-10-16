@@ -75,6 +75,8 @@ Each Bash case also runs through `bash-guards.py`, which applies every guard, as
 
 When a guard gets a case wrong today, mark the line `"known_miss": true` and give the issue that fixes it. The test passes while the guard is still wrong, and fails once it is right, so remove the flag in the same change as the fix.
 
+When a guard gets a case wrong by design, mark it `"limit": true` instead, and list it in the README under what the guards don't stop. Limits work like known misses but need no issue.
+
 `bench.py` prints, per guard, the bypasses it catches, the benign commands it blocks, its known misses and the time one call adds. Put its table in the release notes when a guard changes.
 
 ## CI
