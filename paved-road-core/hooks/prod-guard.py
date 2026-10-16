@@ -78,6 +78,14 @@ MUTATORS = [
     (r"\b(scp|rsync)\b", "file transfer"),
     (r"\baws\s+\w+\s+(delete|create|update|put|terminate|modify|attach|detach)", "aws cli"),
     (r"\bgcloud\s+\w+\s+(delete|create|update|deploy)", "gcloud"),
+    # For az, pulumi and cdk the verb can follow command groups and global
+    # options (`az --subscription x deployment group create`), so any words may
+    # come first. The verb must stand alone, so `update-svc` is not `update`.
+    (r"\baz(\s+\S+)*?\s+(delete|create|update|set|deploy|start|stop|restart|scale|"
+     r"upgrade|purge|remove|add|assign|import|swap|rotate|invoke)(?=\s|$)", "az cli"),
+    (r"\bpulumi(\s+\S+)*?\s+(up|update|destroy|refresh|import|cancel|stack\s+rm|"
+     r"state\s+(delete|edit|move|unprotect))(?=\s|$)", "pulumi"),
+    (r"\bcdk(\s+\S+)*?\s+(deploy|destroy|bootstrap|import|watch|rollback)(?=\s|$)", "cdk"),
     (r"\bdocker\s+(push|rm|kill|stop|restart)\b", "docker"),
     (r"\bflux\b|\bargocd\s+app\s+(sync|delete|set)\b", "gitops cli"),
 ]
