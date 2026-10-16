@@ -10,12 +10,13 @@ paved-road-core/
   agents/<name>.md                  # executor and reviewer
   hooks/hooks.json                  # which hook runs on which event
   hooks/<name>-guard.py             # exit 2 blocks the tool call, exit 0 allows it
+  hooks/bash-guards.py              # runs the Bash guards in one process
   hooks/working-style.py            # prints working-style.md at session start
   working-style.md                  # rules added to every session
   bin/                              # scripts, on PATH once the plugin is installed
   tests/guards.test.py              # runs the guard corpus and the session hook
-  tests/corpus/bypass.jsonl         # commands a guard must block
-  tests/corpus/benign.jsonl         # commands a guard must allow
+  tests/corpus/<guard>/bypass.jsonl # commands a guard must block
+  tests/corpus/<guard>/benign.jsonl # commands a guard must allow
   tests/corpus_lib.py               # loads and runs corpus cases; documents the format
   tests/tools.test.py               # script tests
   rules/                            # rule files a repo can copy into .claude/rules/
@@ -52,7 +53,7 @@ Lint fails when:
 |---|---|---|
 | A procedure | `skills/<name>/SKILL.md` | A `description` that says when to use it. Only that line loads at session start. |
 | A persona | `agents/<name>.md` | The shortest `tools` list that does the job. |
-| A hard rule | `hooks/<name>-guard.py` | An entry in `hooks.json`, its name in `guards.test.py`, and cases in `tests/corpus/bypass.jsonl` and `benign.jsonl`. |
+| A hard rule | `hooks/<name>-guard.py` with a `check(event)` function | Its name in `GUARDS` in `bash-guards.py` for a Bash rule, or an entry in `hooks.json` for another tool. Also its name in `guards.test.py`, and cases in `tests/corpus/<name>/`. |
 | A script | `bin/<name>` | A shebang, the executable bit and a case in `tools.test.py`. |
 
 Run `prose-check` on any Markdown you add.
@@ -68,7 +69,9 @@ Bump `version` in `plugin.json` when a change is worth pulling.
 
 ## Guard corpus
 
-Each line in `tests/corpus/bypass.jsonl` is a command a guard must block. Each line in `benign.jsonl` is one it must allow. `tests/corpus_lib.py` lists the keys.
+Each guard has a directory, `tests/corpus/<guard>/`. Each line in its `bypass.jsonl` is a command the guard must block. Each line in its `benign.jsonl` is one it must allow. `tests/corpus_lib.py` lists the keys. A directory per guard means PRs for different guards don't edit the same file.
+
+Each Bash case also runs through `bash-guards.py`, which applies every guard, as a session does. A benign command must pass all of them.
 
 When a guard gets a case wrong today, mark the line `"known_miss": true` and give the issue that fixes it. The test passes while the guard is still wrong, and fails once it is right, so remove the flag in the same change as the fix.
 

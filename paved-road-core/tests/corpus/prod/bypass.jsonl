@@ -1,0 +1,60 @@
+{"label": "kubectl delete in prod", "bash": "kubectl -n prod delete pod api-1"}
+{"label": "kubectl delete, namespace= form", "bash": "kubectl --namespace=production delete pod api-1"}
+{"label": "kubectl apply -k production overlay", "bash": "kubectl apply -k overlays/production"}
+{"label": "kubectl exec shell in prod", "bash": "kubectl -n prod exec -it api-1 -- sh"}
+{"label": "rollout undo in prod", "bash": "kubectl -n prod rollout undo deployment/api"}
+{"label": "ansible against production", "bash": "ansible-playbook -i inventories/production site.yml"}
+{"label": "ssh to staging", "bash": "ssh deploy@staging-01.example.com"}
+{"label": "interactive ssh to prod", "bash": "ssh prod-db-01"}
+{"label": "terraform apply prod", "bash": "terraform apply -var-file=prod.tfvars"}
+{"label": "terraform destroy prod", "bash": "terraform destroy -var-file=prod.tfvars"}
+{"label": "helm upgrade production", "bash": "helm upgrade api ./chart -n production"}
+{"label": "helm upgrade, kube-context flag", "bash": "helm upgrade api ./chart --kube-context production"}
+{"label": "docker push prod tag", "bash": "docker push registry.example.com/api:prod"}
+{"label": "kubectl delete, prod current-context", "bash": "kubectl delete deployment api", "kubeconfig": "fixtures/prod-context.yaml"}
+{"label": "dev namespace on a prod cluster", "bash": "kubectl -n dev delete pod api-1", "kubeconfig": "fixtures/prod-context.yaml"}
+{"label": "helm upgrade, prod current-context", "bash": "helm upgrade api ./chart", "kubeconfig": "fixtures/prod-context.yaml"}
+{"label": "helm upgrade, HELM_KUBECONTEXT prod", "bash": "helm upgrade api ./chart", "env": {"HELM_KUBECONTEXT": "prod-eu"}}
+{"label": "inline KUBECONFIG to prod", "bash": "KUBECONFIG=cluster-a.yaml kubectl delete pod api-1", "cwd": "fixtures"}
+{"label": "--kubeconfig flag to prod", "bash": "kubectl --kubeconfig fixtures/cluster-a.yaml delete pod api-1", "cwd": "."}
+{"label": "read then delete in one command", "bash": "kubectl -n prod get pods && kubectl -n prod delete pod api-1"}
+{"label": "terraform apply, prod workspace", "bash": "terraform apply", "cwd": "fixtures/tf-prod"}
+{"label": "terraform apply, TF_WORKSPACE prod", "bash": "terraform apply", "env": {"TF_WORKSPACE": "prod"}}
+{"label": "terraform -chdir into a prod workspace", "bash": "terraform -chdir=fixtures/tf-prod apply", "cwd": "."}
+{"label": "terraform -chdir into a prod directory", "bash": "terraform -chdir=envs/prod apply -auto-approve"}
+{"label": "az aks delete prod", "bash": "az aks delete -n prod-cluster -g rg"}
+{"label": "pulumi up production", "bash": "pulumi up --stack production"}
+{"label": "cdk deploy prod stack", "bash": "cdk deploy app-prod"}
+{"label": "kubectl exec bash in prod", "bash": "kubectl -n prod exec -it api-1 -- bash"}
+{"label": "kubectl exec through sh -c", "bash": "kubectl -n prod exec api-1 -- sh -c 'curl localhost'"}
+{"label": "kubectl exec curl POST", "bash": "kubectl -n prod exec api-1 -- curl -X POST localhost/admin/flush"}
+{"label": "kubectl exec without --", "bash": "kubectl -n prod exec api-1 ps"}
+{"label": "ssh restart a service", "bash": "ssh prod-db-01 sudo systemctl restart api"}
+{"label": "ssh read then delete", "bash": "ssh prod-db-01 'tail /var/log/syslog; rm -rf /tmp/x'"}
+{"label": "ssh pipe into kill", "bash": "ssh prod-db-01 'ps aux | xargs kill'"}
+{"label": "ssh redirect writes a file", "bash": "ssh prod-db-01 'tail /var/log/syslog > /tmp/copy'"}
+{"label": "ssh journalctl vacuum", "bash": "ssh prod-db-01 journalctl --vacuum-size=1M"}
+{"label": "ssh curl with data", "bash": "ssh prod-db-01 \"curl -d x localhost/api\""}
+{"label": "ssh command substitution", "bash": "ssh prod-db-01 'cat $(rm -f /tmp/x)'"}
+{"label": "curl POST in a short-flag cluster", "bash": "kubectl -n prod exec api-1 -- curl -sXPOST localhost/admin/flush"}
+{"label": "curl --json sends a POST", "bash": "kubectl -n prod exec api-1 -- curl --json '{}' localhost/admin"}
+{"label": "ssh date -s sets the clock", "bash": "ssh prod-db-01 date -s 2020-01-01"}
+{"label": "ssh ss -K kills sockets", "bash": "ssh prod-db-01 ss -K dst 10.0.0.1"}
+{"label": "ssh hostname renames the host", "bash": "ssh prod-db-01 hostname db-02"}
+{"label": "az deployment group create", "bash": "az deployment group create -g rg-prod --template-file main.bicep"}
+{"label": "az webapp restart", "bash": "az webapp restart -n api -g rg-production"}
+{"label": "az vm run-command invoke", "bash": "az vm run-command invoke -g rg-prod -n vm1 --command-id RunShellScript --scripts 'id'"}
+{"label": "az keyvault secret set", "bash": "az keyvault secret set --vault-name kv-prod -n api-key --value x"}
+{"label": "pulumi destroy prod", "bash": "pulumi destroy -s org/prod --yes"}
+{"label": "pulumi stack rm prod", "bash": "pulumi stack rm prod"}
+{"label": "pulumi state delete", "bash": "pulumi state delete --stack production 'urn:pulumi:production::api::aws:s3/bucket:Bucket::logs'"}
+{"label": "cdk destroy prod stack", "bash": "cdk destroy app-prod --force"}
+{"label": "npx cdk deploy prod stack", "bash": "npx cdk deploy ApiStack-prod"}
+{"label": "cdk watch staging", "bash": "cdk watch app-staging"}
+{"label": "az global flag before the group", "bash": "az --subscription prod-sub aks delete -n api -g rg"}
+{"label": "pulumi global flag before up", "bash": "pulumi --cwd infra up --stack production"}
+{"label": "cdk global flag before deploy", "bash": "cdk --profile prod deploy"}
+{"label": "aws cloudformation deploy prod", "bash": "aws cloudformation deploy --stack-name api-prod --template-file t.yml", "known_miss": true, "issue": 38}
+{"label": "aws s3 rm prod bucket", "bash": "aws s3 rm s3://prod-logs --recursive", "known_miss": true, "issue": 38}
+{"label": "aws ssm send-command", "bash": "aws ssm send-command --instance-ids i-1 --document-name AWS-RunShellScript --comment prod", "known_miss": true, "issue": 38}
+{"label": "cdk deploy --all", "bash": "cdk deploy --all --profile default", "known_miss": true, "issue": 38}

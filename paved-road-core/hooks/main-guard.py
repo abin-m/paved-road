@@ -32,11 +32,6 @@ COMMIT_VALUE_OPTS = {"-m", "--message", "-F", "--file", "-C", "-c", "-t", "--tem
                      "--author", "--date", "--fixup", "--squash", "--cleanup"}
 
 
-def block(msg: str) -> None:
-    print(msg, file=sys.stderr)
-    sys.exit(2)
-
-
 def current_branch(cwd: str) -> str:
     try:
         out = subprocess.run(
@@ -129,37 +124,45 @@ def commit_all(args: list) -> bool:
     return False
 
 
-def main() -> None:
-    try:
-        event = json.load(sys.stdin)
-    except (json.JSONDecodeError, ValueError):
-        sys.exit(0)
-
+def check(event: dict) -> str:
+    """The message to block this tool call with, or "" to allow it."""
     if event.get("tool_name") != "Bash":
-        sys.exit(0)
+        return ""
 
     cmd = (event.get("tool_input") or {}).get("command", "") or ""
     cwd = event.get("cwd") or os.getcwd()
 
     for directory, sub, args in git_commands(cmd):
         if sub == "add" and bulk_add(args):
-            block(
+            return (
                 "BLOCKED (bulk staging): `git add -A` / `-u` / `.` sweeps unrelated "
                 "work into the commit. Stage explicit paths: git add <file> ..."
             )
         if sub == "commit" and commit_all(args):
-            block(
+            return (
                 "BLOCKED (implicit add): `git commit -a` commits every tracked change. "
                 "Stage explicit paths, then commit without -a."
             )
         if sub == "commit":
             branch = current_branch(os.path.join(cwd, directory))
             if branch in DEFAULT_BRANCHES:
-                block(
+                return (
                     f"BLOCKED (commit on {branch}): create a topic branch first — "
                     f"git switch -c <type>/<short-topic>"
                 )
 
+    return ""
+
+
+def main() -> None:
+    try:
+        event = json.load(sys.stdin)
+    except (json.JSONDecodeError, ValueError):
+        sys.exit(0)  # unparseable event: never block on our own bug
+    message = check(event)
+    if message:
+        print(message, file=sys.stderr)
+        sys.exit(2)
     sys.exit(0)
 
 

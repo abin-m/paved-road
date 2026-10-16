@@ -1,0 +1,13 @@
+{"label": "git status", "bash": "git status"}
+{"label": "git add a named path", "bash": "git add src/main.py"}
+{"label": "git add -p", "bash": "git add -p"}
+{"label": "git log --all", "bash": "git log --all --oneline"}
+{"label": "commit on a topic branch", "bash": "git commit -m 'fix: typo'", "branch": "fix/typo"}
+{"label": "amend on a topic branch", "bash": "git commit --amend --no-edit", "branch": "fix/typo"}
+{"label": "commit message mentions -a", "bash": "git commit -m \"remove the -a flag\"", "branch": "fix/typo"}
+{"label": "commit message starts with -a", "bash": "git commit -m \"-a is gone\"", "branch": "fix/typo"}
+{"label": "amend with a message mentioning all", "bash": "git commit --amend -m 'update all docs'", "branch": "fix/typo"}
+{"label": "add a file whose name has -A", "bash": "git add 'notes -A.txt'"}
+{"label": "git stash -u", "bash": "git stash push -u"}
+{"label": "git -C add a named path", "bash": "git -C ../other add src/main.py"}
+{"label": "commit message quotes git add -A", "bash": "git commit -m 'stop using git add -A'", "branch": "fix/typo"}

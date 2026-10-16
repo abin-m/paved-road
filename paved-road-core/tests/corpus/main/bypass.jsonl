@@ -1,0 +1,22 @@
+{"label": "git add -A", "bash": "git add -A"}
+{"label": "git add --all", "bash": "git add --all"}
+{"label": "git add .", "bash": "git add ."}
+{"label": "git commit -am", "bash": "git commit -am 'x'"}
+{"label": "commit on main", "bash": "git commit -m 'fix: typo'", "branch": "main"}
+{"label": "commit on master", "bash": "git commit -m 'fix: typo'", "branch": "master"}
+{"label": "git add -u", "bash": "git add -u"}
+{"label": "git add --update", "bash": "git add --update"}
+{"label": "git add -A in a flag cluster", "bash": "git add -Av"}
+{"label": "git add ./", "bash": "git add ./"}
+{"label": "git add :/", "bash": "git add :/"}
+{"label": "git add * glob", "bash": "git add *"}
+{"label": "git add -- .", "bash": "git add -- ."}
+{"label": "git -C before add -A", "bash": "git -C ../other add -A"}
+{"label": "git -C before commit on main", "bash": "git -C . commit -m 'fix: typo'", "branch": "main"}
+{"label": "commit -a in a flag cluster", "bash": "git commit -qam 'fix: typo'", "branch": "fix/typo"}
+{"label": "commit -a after the message", "bash": "git commit -m 'fix: typo' -a", "branch": "fix/typo"}
+{"label": "add -A after a quoted step", "bash": "echo 'done' && git add -A"}
+{"label": "add -A inside bash -c", "bash": "bash -c 'git add -A'"}
+{"label": "add . inside eval", "bash": "eval \"git add .\""}
+{"label": "add -A inside backticks", "bash": "echo `git add -A`"}
+{"label": "add -A inside $( )", "bash": "echo $(git add -A)"}

@@ -3,7 +3,7 @@
 
 Prints, per guard: how many bypass commands it blocks, how many benign
 commands it wrongly blocks, its known misses, and the time one call adds.
-The last line is the time a Bash call pays for all three Bash guards.
+The last line is the time a Bash call pays: bash-guards.py running all three.
 
 This script reports and always exits 0. tests/guards.test.py is the gate.
 
@@ -58,12 +58,9 @@ def main() -> int:
     timings = {g: [] for g in corpus_lib.GUARDS}
     per_bash_call = []
     for _ in range(args.runs):
-        total = 0.0
         for name, path in corpus_lib.GUARDS.items():
-            ms = time_call(path)
-            timings[name].append(ms)
-            total += ms
-        per_bash_call.append(total)
+            timings[name].append(time_call(path))
+        per_bash_call.append(time_call(corpus_lib.BASH_GUARDS))
 
     print(f"{'guard':8}  {'caught':>8}  {'wrongly blocked':>15}  {'known misses':>12}  {'p50 ms':>6}  {'p95 ms':>6}")
     for name, s in stats.items():
@@ -75,7 +72,7 @@ def main() -> int:
             f"{statistics.median(t):6.0f}  {p95(t):6.0f}"
         )
     print(
-        f"\nOne Bash call runs all three guards: p50 {statistics.median(per_bash_call):.0f} ms, "
+        f"\nOne Bash call runs bash-guards.py: p50 {statistics.median(per_bash_call):.0f} ms, "
         f"p95 {p95(per_bash_call):.0f} ms over {args.runs} runs."
     )
 

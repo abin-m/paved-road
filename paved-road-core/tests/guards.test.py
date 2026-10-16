@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Guard tests — a guard that ships without a test has never run.
 
-Runs every case in corpus/bypass.jsonl (must exit 2) and corpus/benign.jsonl
-(must exit 0); corpus_lib.py documents the format. A known miss passes while
+Runs every case in corpus/<guard>/bypass.jsonl (must exit 2) and
+benign.jsonl (must exit 0); corpus_lib.py documents the format. Each Bash
+case also runs through bash-guards.py, the hook Claude Code runs, which
+applies all three guards: a benign command must pass all of them. A known miss passes while
 the guard still gets it wrong, and fails once the guard is fixed, so the
 known_miss flag is removed in the same change. The working-style hook blocks
 nothing, so its case asserts what it prints.
@@ -26,6 +28,7 @@ SECRETS = HOOKS / "secrets-guard.py"
 MAIN = HOOKS / "main-guard.py"
 PROD = HOOKS / "prod-guard.py"
 STYLE = HOOKS / "working-style.py"
+BASH_GUARDS = corpus_lib.BASH_GUARDS  # bash-guards.py
 STYLE_TEXT = HOOKS.parent / "working-style.md"
 
 
@@ -60,6 +63,12 @@ def main() -> int:
             status = "PASS" if correct else "FAIL"
             failures += not correct
             note = f"exit {got}, want {case.expected}"
+            if correct and "bash" in case.raw:
+                via = corpus_lib.run(case, BASH_GUARDS)
+                if via != case.expected:
+                    status = "FAIL"
+                    failures += 1
+                    note = f"bash-guards.py exits {via}, want {case.expected}"
         print(f"{status}  {case.guard:8} {case.kind:7} {case.label} ({note})")
     ok = style_output_ok()
     if not ok:

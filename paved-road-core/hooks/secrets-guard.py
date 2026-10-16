@@ -48,11 +48,6 @@ VALUE_FLAGS = {"-A", "-B", "-C", "-m", "-g", "-t", "-T", "-d", "-D", "-F", "-v",
                "--before-context", "--field-separator", "--assign"}
 
 
-def block(msg: str) -> None:
-    print(msg, file=sys.stderr)
-    sys.exit(2)
-
-
 def why_secret(path: str) -> str:
     norm = path.replace("\\", "/")
     base = os.path.basename(norm)
@@ -97,12 +92,8 @@ def pattern_args(cmd: str) -> list:
     return found
 
 
-def main() -> None:
-    try:
-        event = json.load(sys.stdin)
-    except (json.JSONDecodeError, ValueError):
-        sys.exit(0)  # unparseable event: never block on our own bug
-
+def check(event: dict) -> str:
+    """The message to block this tool call with, or "" to allow it."""
     ti = event.get("tool_input") or {}
     tool = event.get("tool_name", "")
 
@@ -118,25 +109,37 @@ def main() -> None:
             for token in tokens:
                 reason = why_secret(token)
                 if reason:
-                    block(
+                    return (
                         f"BLOCKED ({reason}): secrets never enter agent context. "
                         f"Reference it at runtime instead (--var-file, KUBECONFIG=, "
                         f"$(pass ...)), or write a script for the human to run. "
                         f"Command: {cmd}"
                     )
-        sys.exit(0)
+        return ""
 
     path = ti.get("file_path") or ti.get("path") or ""
     if not path:
-        sys.exit(0)
+        return ""
 
     reason = why_secret(path)
     if reason:
-        block(
+        return (
             f"BLOCKED ({reason}): secrets are never read into context; reference "
             f"the value at runtime or write a script for the human to run. "
             f"Path: {path}"
         )
+    return ""
+
+
+def main() -> None:
+    try:
+        event = json.load(sys.stdin)
+    except (json.JSONDecodeError, ValueError):
+        sys.exit(0)  # unparseable event: never block on our own bug
+    message = check(event)
+    if message:
+        print(message, file=sys.stderr)
+        sys.exit(2)
     sys.exit(0)
 
 

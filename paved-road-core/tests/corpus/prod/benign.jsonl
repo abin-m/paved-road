@@ -1,0 +1,39 @@
+{"label": "kubectl get in prod", "bash": "kubectl -n prod get pods"}
+{"label": "kubectl logs in prod", "bash": "kubectl -n prod logs api-1 --previous"}
+{"label": "kubectl get, prod context flag", "bash": "kubectl --context prod-eu get nodes"}
+{"label": "rollout status in prod", "bash": "kubectl -n prod rollout status deployment/api"}
+{"label": "helm get values in production", "bash": "helm -n production get values api"}
+{"label": "delete in dev", "bash": "kubectl -n dev delete pod api-1"}
+{"label": "kubectl delete, dev current-context", "bash": "kubectl delete deployment api"}
+{"label": "dev --context on a prod machine", "bash": "kubectl --context dev-eu delete pod api-1", "kubeconfig": "fixtures/prod-context.yaml"}
+{"label": "dev --kube-context on a prod machine", "bash": "helm upgrade api ./chart --kube-context dev-eu", "kubeconfig": "fixtures/prod-context.yaml"}
+{"label": "read-only kubectl, prod current-context", "bash": "kubectl get pods", "kubeconfig": "fixtures/prod-context.yaml"}
+{"label": "no kubeconfig file", "bash": "kubectl delete pod api-1", "kubeconfig": "fixtures/missing.yaml"}
+{"label": "terraform apply, dev workspace", "bash": "terraform apply", "cwd": "fixtures/tf-dev"}
+{"label": "terraform apply, default workspace", "bash": "terraform apply"}
+{"label": "terraform plan, prod workspace", "bash": "terraform plan", "cwd": "fixtures/tf-prod"}
+{"label": "liveness is not live", "bash": "kubectl apply -f k8s/liveness-probe.yaml"}
+{"label": "reproduce is not prod", "bash": "pytest tests/test_reproduce.py"}
+{"label": "terraform plan prod", "bash": "terraform plan -var-file=prod.tfvars"}
+{"label": "explicit PROD_OK", "bash": "PROD_OK=1 kubectl -n prod rollout undo deployment/api"}
+{"label": "az aks show prod", "bash": "az aks show -n prod-cluster -g rg"}
+{"label": "pulumi preview production", "bash": "pulumi preview --stack production"}
+{"label": "kubectl exec curl in prod", "bash": "kubectl -n prod exec api-1 -- curl -s localhost/healthz"}
+{"label": "ssh tail syslog on prod", "bash": "ssh prod-db-01 tail -n 50 /var/log/syslog"}
+{"label": "kubectl exec ps in a named container", "bash": "kubectl -n prod exec api-1 -c app -- ps aux"}
+{"label": "ssh pipe between read-only commands", "bash": "ssh prod-db-01 'ps aux | grep api'"}
+{"label": "ssh with port and user", "bash": "ssh -p 2222 deploy@prod-db-01 df -h"}
+{"label": "ssh sudo journalctl for one unit", "bash": "ssh prod-db-01 sudo journalctl -u api --since \"10 min ago\""}
+{"label": "ssh systemctl status", "bash": "ssh prod-db-01 systemctl status api"}
+{"label": "kubectl exec curl with silent and header flags", "bash": "kubectl -n prod exec api-1 -- curl -sS -H 'Accept: application/json' localhost/healthz"}
+{"label": "ssh ss listening sockets", "bash": "ssh prod-db-01 ss -tlnp"}
+{"label": "az aks get-credentials prod", "bash": "az aks get-credentials -n prod-cluster -g rg"}
+{"label": "az group list with a prod query", "bash": "az group list --query \"[?contains(name,'prod')]\""}
+{"label": "az deployment what-if prod", "bash": "az deployment group what-if -g rg-prod --template-file main.bicep"}
+{"label": "az aks create in dev", "bash": "az aks create -n dev-cluster -g rg-dev"}
+{"label": "pulumi stack select production", "bash": "pulumi stack select production"}
+{"label": "pulumi stack output production", "bash": "pulumi stack output --stack production"}
+{"label": "cdk diff prod stack", "bash": "cdk diff app-prod"}
+{"label": "cdk synth prod stack", "bash": "cdk synth app-prod"}
+{"label": "az verb word inside a resource name", "bash": "az webapp show --name update-svc -g rg-prod"}
+{"label": "pulumi preview with an update message", "bash": "pulumi preview --stack production --message \"update tags\""}

@@ -91,11 +91,6 @@ MUTATORS = [
 ]
 
 
-def block(msg: str) -> None:
-    print(msg, file=sys.stderr)
-    sys.exit(2)
-
-
 def _subcommands(cmd: str, tool: str) -> list[str]:
     """Bare (non-flag) tokens following the tool name.
 
@@ -312,21 +307,17 @@ def implicit_target(cmd: str, tool: str, cwd: str) -> str:
     return ""
 
 
-def main() -> None:
-    try:
-        event = json.load(sys.stdin)
-    except (json.JSONDecodeError, ValueError):
-        sys.exit(0)
-
+def check(event: dict) -> str:
+    """The message to block this tool call with, or "" to allow it."""
     if event.get("tool_name") != "Bash":
-        sys.exit(0)
+        return ""
 
     cmd = (event.get("tool_input") or {}).get("command", "") or ""
     cwd = event.get("cwd") or os.getcwd()
 
     # Explicit, visible authorisation.
     if re.match(r"^\s*PROD_OK=1\b", cmd):
-        sys.exit(0)
+        return ""
 
     names_prod = bool(PROD_RE.search(cmd))
 
@@ -338,13 +329,25 @@ def main() -> None:
                 continue
             target = "production/staging" if names_prod else implicit_target(part, label, cwd)
             if target:
-                block(
+                return (
                     f"BLOCKED ({label} against {target}): this mutates a live "
                     f"environment and was not explicitly asked for. If it IS intended, "
                     f"say so and re-run prefixed with PROD_OK=1 so the authorisation is "
                     f"on the record. Command: {cmd}"
                 )
 
+    return ""
+
+
+def main() -> None:
+    try:
+        event = json.load(sys.stdin)
+    except (json.JSONDecodeError, ValueError):
+        sys.exit(0)  # unparseable event: never block on our own bug
+    message = check(event)
+    if message:
+        print(message, file=sys.stderr)
+        sys.exit(2)
     sys.exit(0)
 
 
