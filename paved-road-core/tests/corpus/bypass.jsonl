@@ -45,9 +45,9 @@
 {"guard": "prod", "label": "terraform apply, TF_WORKSPACE prod", "bash": "terraform apply", "env": {"TF_WORKSPACE": "prod"}}
 {"guard": "prod", "label": "terraform -chdir into a prod workspace", "bash": "terraform -chdir=fixtures/tf-prod apply", "cwd": "."}
 {"guard": "prod", "label": "terraform -chdir into a prod directory", "bash": "terraform -chdir=envs/prod apply -auto-approve"}
-{"guard": "prod", "label": "az aks delete prod", "bash": "az aks delete -n prod-cluster -g rg", "known_miss": true, "issue": 25}
-{"guard": "prod", "label": "pulumi up production", "bash": "pulumi up --stack production", "known_miss": true, "issue": 25}
-{"guard": "prod", "label": "cdk deploy prod stack", "bash": "cdk deploy app-prod", "known_miss": true, "issue": 25}
+{"guard": "prod", "label": "az aks delete prod", "bash": "az aks delete -n prod-cluster -g rg"}
+{"guard": "prod", "label": "pulumi up production", "bash": "pulumi up --stack production"}
+{"guard": "prod", "label": "cdk deploy prod stack", "bash": "cdk deploy app-prod"}
 {"guard": "prod", "label": "kubectl exec bash in prod", "bash": "kubectl -n prod exec -it api-1 -- bash"}
 {"guard": "prod", "label": "kubectl exec through sh -c", "bash": "kubectl -n prod exec api-1 -- sh -c 'curl localhost'"}
 {"guard": "prod", "label": "kubectl exec curl POST", "bash": "kubectl -n prod exec api-1 -- curl -X POST localhost/admin/flush"}
@@ -64,3 +64,20 @@
 {"guard": "prod", "label": "ssh date -s sets the clock", "bash": "ssh prod-db-01 date -s 2020-01-01"}
 {"guard": "prod", "label": "ssh ss -K kills sockets", "bash": "ssh prod-db-01 ss -K dst 10.0.0.1"}
 {"guard": "prod", "label": "ssh hostname renames the host", "bash": "ssh prod-db-01 hostname db-02"}
+{"guard": "prod", "label": "az deployment group create", "bash": "az deployment group create -g rg-prod --template-file main.bicep"}
+{"guard": "prod", "label": "az webapp restart", "bash": "az webapp restart -n api -g rg-production"}
+{"guard": "prod", "label": "az vm run-command invoke", "bash": "az vm run-command invoke -g rg-prod -n vm1 --command-id RunShellScript --scripts 'id'"}
+{"guard": "prod", "label": "az keyvault secret set", "bash": "az keyvault secret set --vault-name kv-prod -n api-key --value x"}
+{"guard": "prod", "label": "pulumi destroy prod", "bash": "pulumi destroy -s org/prod --yes"}
+{"guard": "prod", "label": "pulumi stack rm prod", "bash": "pulumi stack rm prod"}
+{"guard": "prod", "label": "pulumi state delete", "bash": "pulumi state delete --stack production 'urn:pulumi:production::api::aws:s3/bucket:Bucket::logs'"}
+{"guard": "prod", "label": "cdk destroy prod stack", "bash": "cdk destroy app-prod --force"}
+{"guard": "prod", "label": "npx cdk deploy prod stack", "bash": "npx cdk deploy ApiStack-prod"}
+{"guard": "prod", "label": "cdk watch staging", "bash": "cdk watch app-staging"}
+{"guard": "prod", "label": "az global flag before the group", "bash": "az --subscription prod-sub aks delete -n api -g rg"}
+{"guard": "prod", "label": "pulumi global flag before up", "bash": "pulumi --cwd infra up --stack production"}
+{"guard": "prod", "label": "cdk global flag before deploy", "bash": "cdk --profile prod deploy"}
+{"guard": "prod", "label": "aws cloudformation deploy prod", "bash": "aws cloudformation deploy --stack-name api-prod --template-file t.yml", "known_miss": true, "issue": 38}
+{"guard": "prod", "label": "aws s3 rm prod bucket", "bash": "aws s3 rm s3://prod-logs --recursive", "known_miss": true, "issue": 38}
+{"guard": "prod", "label": "aws ssm send-command", "bash": "aws ssm send-command --instance-ids i-1 --document-name AWS-RunShellScript --comment prod", "known_miss": true, "issue": 38}
+{"guard": "prod", "label": "cdk deploy --all", "bash": "cdk deploy --all --profile default", "known_miss": true, "issue": 38}

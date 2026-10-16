@@ -46,3 +46,13 @@
 {"guard": "prod", "label": "ssh systemctl status", "bash": "ssh prod-db-01 systemctl status api"}
 {"guard": "prod", "label": "kubectl exec curl with silent and header flags", "bash": "kubectl -n prod exec api-1 -- curl -sS -H 'Accept: application/json' localhost/healthz"}
 {"guard": "prod", "label": "ssh ss listening sockets", "bash": "ssh prod-db-01 ss -tlnp"}
+{"guard": "prod", "label": "az aks get-credentials prod", "bash": "az aks get-credentials -n prod-cluster -g rg"}
+{"guard": "prod", "label": "az group list with a prod query", "bash": "az group list --query \"[?contains(name,'prod')]\""}
+{"guard": "prod", "label": "az deployment what-if prod", "bash": "az deployment group what-if -g rg-prod --template-file main.bicep"}
+{"guard": "prod", "label": "az aks create in dev", "bash": "az aks create -n dev-cluster -g rg-dev"}
+{"guard": "prod", "label": "pulumi stack select production", "bash": "pulumi stack select production"}
+{"guard": "prod", "label": "pulumi stack output production", "bash": "pulumi stack output --stack production"}
+{"guard": "prod", "label": "cdk diff prod stack", "bash": "cdk diff app-prod"}
+{"guard": "prod", "label": "cdk synth prod stack", "bash": "cdk synth app-prod"}
+{"guard": "prod", "label": "az verb word inside a resource name", "bash": "az webapp show --name update-svc -g rg-prod"}
+{"guard": "prod", "label": "pulumi preview with an update message", "bash": "pulumi preview --stack production --message \"update tags\""}
