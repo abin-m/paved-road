@@ -64,3 +64,9 @@
 {"guard": "secrets", "label": "read tokenizer.json", "tool": "Read", "file_path": "models/tokenizer.json"}
 {"guard": "secrets", "label": "grep with a context flag value", "bash": "grep -A 3 refresh_token src/"}
 {"guard": "secrets", "label": "awk with a field separator", "bash": "awk -F : '{print $1}' data/api_token_usage.csv"}
+{"guard": "main", "label": "commit message starts with -a", "bash": "git commit -m \"-a is gone\"", "branch": "fix/typo"}
+{"guard": "main", "label": "amend with a message mentioning all", "bash": "git commit --amend -m 'update all docs'", "branch": "fix/typo"}
+{"guard": "main", "label": "add a file whose name has -A", "bash": "git add 'notes -A.txt'"}
+{"guard": "main", "label": "git stash -u", "bash": "git stash push -u"}
+{"guard": "main", "label": "git -C add a named path", "bash": "git -C ../other add src/main.py"}
+{"guard": "main", "label": "commit message quotes git add -A", "bash": "git commit -m 'stop using git add -A'", "branch": "fix/typo"}
