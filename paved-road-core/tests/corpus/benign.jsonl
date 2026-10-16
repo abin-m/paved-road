@@ -16,7 +16,7 @@
 {"guard": "main", "label": "git log --all", "bash": "git log --all --oneline"}
 {"guard": "main", "label": "commit on a topic branch", "bash": "git commit -m 'fix: typo'", "branch": "fix/typo"}
 {"guard": "main", "label": "amend on a topic branch", "bash": "git commit --amend --no-edit", "branch": "fix/typo"}
-{"guard": "main", "label": "commit message mentions -a", "bash": "git commit -m \"remove the -a flag\"", "branch": "fix/typo", "known_miss": true, "issue": 27}
+{"guard": "main", "label": "commit message mentions -a", "bash": "git commit -m \"remove the -a flag\"", "branch": "fix/typo"}
 {"guard": "prod", "label": "kubectl get in prod", "bash": "kubectl -n prod get pods"}
 {"guard": "prod", "label": "kubectl logs in prod", "bash": "kubectl -n prod logs api-1 --previous"}
 {"guard": "prod", "label": "kubectl get, prod context flag", "bash": "kubectl --context prod-eu get nodes"}

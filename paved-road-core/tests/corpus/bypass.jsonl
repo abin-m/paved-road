@@ -20,7 +20,7 @@
 {"guard": "main", "label": "git commit -am", "bash": "git commit -am 'x'"}
 {"guard": "main", "label": "commit on main", "bash": "git commit -m 'fix: typo'", "branch": "main"}
 {"guard": "main", "label": "commit on master", "bash": "git commit -m 'fix: typo'", "branch": "master"}
-{"guard": "main", "label": "git add -u", "bash": "git add -u", "known_miss": true, "issue": 27}
+{"guard": "main", "label": "git add -u", "bash": "git add -u"}
 {"guard": "prod", "label": "kubectl delete in prod", "bash": "kubectl -n prod delete pod api-1"}
 {"guard": "prod", "label": "kubectl delete, namespace= form", "bash": "kubectl --namespace=production delete pod api-1"}
 {"guard": "prod", "label": "kubectl apply -k production overlay", "bash": "kubectl apply -k overlays/production"}
