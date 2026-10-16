@@ -34,8 +34,17 @@
 {"guard": "prod", "label": "helm upgrade production", "bash": "helm upgrade api ./chart -n production"}
 {"guard": "prod", "label": "helm upgrade, kube-context flag", "bash": "helm upgrade api ./chart --kube-context production"}
 {"guard": "prod", "label": "docker push prod tag", "bash": "docker push registry.example.com/api:prod"}
-{"guard": "prod", "label": "kubectl delete, prod current-context", "bash": "kubectl delete deployment api", "env": {"KUBECONFIG": "fixtures/prod-context.yaml"}, "known_miss": true, "issue": 23}
-{"guard": "prod", "label": "terraform apply, prod workspace", "bash": "terraform apply", "cwd": "fixtures/tf-prod", "known_miss": true, "issue": 23}
+{"guard": "prod", "label": "kubectl delete, prod current-context", "bash": "kubectl delete deployment api", "kubeconfig": "fixtures/prod-context.yaml"}
+{"guard": "prod", "label": "dev namespace on a prod cluster", "bash": "kubectl -n dev delete pod api-1", "kubeconfig": "fixtures/prod-context.yaml"}
+{"guard": "prod", "label": "helm upgrade, prod current-context", "bash": "helm upgrade api ./chart", "kubeconfig": "fixtures/prod-context.yaml"}
+{"guard": "prod", "label": "helm upgrade, HELM_KUBECONTEXT prod", "bash": "helm upgrade api ./chart", "env": {"HELM_KUBECONTEXT": "prod-eu"}}
+{"guard": "prod", "label": "inline KUBECONFIG to prod", "bash": "KUBECONFIG=cluster-a.yaml kubectl delete pod api-1", "cwd": "fixtures"}
+{"guard": "prod", "label": "--kubeconfig flag to prod", "bash": "kubectl --kubeconfig fixtures/cluster-a.yaml delete pod api-1", "cwd": "."}
+{"guard": "prod", "label": "read then delete in one command", "bash": "kubectl -n prod get pods && kubectl -n prod delete pod api-1"}
+{"guard": "prod", "label": "terraform apply, prod workspace", "bash": "terraform apply", "cwd": "fixtures/tf-prod"}
+{"guard": "prod", "label": "terraform apply, TF_WORKSPACE prod", "bash": "terraform apply", "env": {"TF_WORKSPACE": "prod"}}
+{"guard": "prod", "label": "terraform -chdir into a prod workspace", "bash": "terraform -chdir=fixtures/tf-prod apply", "cwd": "."}
+{"guard": "prod", "label": "terraform -chdir into a prod directory", "bash": "terraform -chdir=envs/prod apply -auto-approve"}
 {"guard": "prod", "label": "az aks delete prod", "bash": "az aks delete -n prod-cluster -g rg", "known_miss": true, "issue": 25}
 {"guard": "prod", "label": "pulumi up production", "bash": "pulumi up --stack production", "known_miss": true, "issue": 25}
 {"guard": "prod", "label": "cdk deploy prod stack", "bash": "cdk deploy app-prod", "known_miss": true, "issue": 25}
