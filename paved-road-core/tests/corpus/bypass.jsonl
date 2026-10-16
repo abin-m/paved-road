@@ -93,3 +93,18 @@
 {"guard": "secrets", "label": "pattern is the secret file name", "bash": "grep -l x .env.production"}
 {"guard": "secrets", "label": "template and real file together", "bash": "cat .env.example .env"}
 {"guard": "secrets", "label": "pattern equal to the secret file", "bash": "grep .env .env"}
+{"guard": "main", "label": "git add --update", "bash": "git add --update"}
+{"guard": "main", "label": "git add -A in a flag cluster", "bash": "git add -Av"}
+{"guard": "main", "label": "git add ./", "bash": "git add ./"}
+{"guard": "main", "label": "git add :/", "bash": "git add :/"}
+{"guard": "main", "label": "git add * glob", "bash": "git add *"}
+{"guard": "main", "label": "git add -- .", "bash": "git add -- ."}
+{"guard": "main", "label": "git -C before add -A", "bash": "git -C ../other add -A"}
+{"guard": "main", "label": "git -C before commit on main", "bash": "git -C . commit -m 'fix: typo'", "branch": "main"}
+{"guard": "main", "label": "commit -a in a flag cluster", "bash": "git commit -qam 'fix: typo'", "branch": "fix/typo"}
+{"guard": "main", "label": "commit -a after the message", "bash": "git commit -m 'fix: typo' -a", "branch": "fix/typo"}
+{"guard": "main", "label": "add -A after a quoted step", "bash": "echo 'done' && git add -A"}
+{"guard": "main", "label": "add -A inside bash -c", "bash": "bash -c 'git add -A'"}
+{"guard": "main", "label": "add . inside eval", "bash": "eval \"git add .\""}
+{"guard": "main", "label": "add -A inside backticks", "bash": "echo `git add -A`"}
+{"guard": "main", "label": "add -A inside $( )", "bash": "echo $(git add -A)"}
