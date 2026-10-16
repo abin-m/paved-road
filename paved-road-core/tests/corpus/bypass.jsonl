@@ -1,0 +1,41 @@
+{"guard": "secrets", "label": "read .env", "tool": "Read", "file_path": ".env"}
+{"guard": "secrets", "label": "read .env.production", "tool": "Read", "file_path": "app/.env.production"}
+{"guard": "secrets", "label": "read tfvars", "tool": "Read", "file_path": "infra/prod.tfvars"}
+{"guard": "secrets", "label": "read ssh key", "tool": "Read", "file_path": "~/.ssh/id_ed25519"}
+{"guard": "secrets", "label": "write under secrets/", "tool": "Write", "file_path": "secrets/db.yml"}
+{"guard": "secrets", "label": "edit kube config", "tool": "Edit", "file_path": "~/.kube/config"}
+{"guard": "secrets", "label": "cat .env", "bash": "cat .env"}
+{"guard": "secrets", "label": "chained cat tfvars", "bash": "ls -la && cat prod.tfvars"}
+{"guard": "secrets", "label": "less .env", "bash": "less .env"}
+{"guard": "secrets", "label": "head aws credentials", "bash": "head -n 5 ~/.aws/credentials"}
+{"guard": "secrets", "label": "copy then cat .env", "bash": "cp .env /tmp/e && cat /tmp/e"}
+{"guard": "secrets", "label": "grep a pem key", "bash": "grep -n BEGIN certs/server.pem"}
+{"guard": "secrets", "label": "base64 .env", "bash": "base64 .env", "known_miss": true, "issue": 29}
+{"guard": "secrets", "label": "python reads .env", "bash": "python3 -c \"print(open('.env').read())\"", "known_miss": true, "issue": 29}
+{"guard": "secrets", "label": "jq a credentials file", "bash": "jq . credentials", "known_miss": true, "issue": 29}
+{"guard": "secrets", "label": "source .env then env", "bash": "source .env && env", "known_miss": true, "issue": 29}
+{"guard": "main", "label": "git add -A", "bash": "git add -A"}
+{"guard": "main", "label": "git add --all", "bash": "git add --all"}
+{"guard": "main", "label": "git add .", "bash": "git add ."}
+{"guard": "main", "label": "git commit -am", "bash": "git commit -am 'x'"}
+{"guard": "main", "label": "commit on main", "bash": "git commit -m 'fix: typo'", "branch": "main"}
+{"guard": "main", "label": "commit on master", "bash": "git commit -m 'fix: typo'", "branch": "master"}
+{"guard": "main", "label": "git add -u", "bash": "git add -u", "known_miss": true, "issue": 27}
+{"guard": "prod", "label": "kubectl delete in prod", "bash": "kubectl -n prod delete pod api-1"}
+{"guard": "prod", "label": "kubectl delete, namespace= form", "bash": "kubectl --namespace=production delete pod api-1"}
+{"guard": "prod", "label": "kubectl apply -k production overlay", "bash": "kubectl apply -k overlays/production"}
+{"guard": "prod", "label": "kubectl exec shell in prod", "bash": "kubectl -n prod exec -it api-1 -- sh"}
+{"guard": "prod", "label": "rollout undo in prod", "bash": "kubectl -n prod rollout undo deployment/api"}
+{"guard": "prod", "label": "ansible against production", "bash": "ansible-playbook -i inventories/production site.yml"}
+{"guard": "prod", "label": "ssh to staging", "bash": "ssh deploy@staging-01.example.com"}
+{"guard": "prod", "label": "interactive ssh to prod", "bash": "ssh prod-db-01"}
+{"guard": "prod", "label": "terraform apply prod", "bash": "terraform apply -var-file=prod.tfvars"}
+{"guard": "prod", "label": "terraform destroy prod", "bash": "terraform destroy -var-file=prod.tfvars"}
+{"guard": "prod", "label": "helm upgrade production", "bash": "helm upgrade api ./chart -n production"}
+{"guard": "prod", "label": "helm upgrade, kube-context flag", "bash": "helm upgrade api ./chart --kube-context production"}
+{"guard": "prod", "label": "docker push prod tag", "bash": "docker push registry.example.com/api:prod"}
+{"guard": "prod", "label": "kubectl delete, prod current-context", "bash": "kubectl delete deployment api", "env": {"KUBECONFIG": "fixtures/prod-context.yaml"}, "known_miss": true, "issue": 23}
+{"guard": "prod", "label": "terraform apply, prod workspace", "bash": "terraform apply", "cwd": "fixtures/tf-prod", "known_miss": true, "issue": 23}
+{"guard": "prod", "label": "az aks delete prod", "bash": "az aks delete -n prod-cluster -g rg", "known_miss": true, "issue": 25}
+{"guard": "prod", "label": "pulumi up production", "bash": "pulumi up --stack production", "known_miss": true, "issue": 25}
+{"guard": "prod", "label": "cdk deploy prod stack", "bash": "cdk deploy app-prod", "known_miss": true, "issue": 25}

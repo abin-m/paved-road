@@ -1,0 +1,34 @@
+{"guard": "secrets", "label": "read README", "tool": "Read", "file_path": "README.md"}
+{"guard": "secrets", "label": "read env_loader.py", "tool": "Read", "file_path": "src/env_loader.py"}
+{"guard": "secrets", "label": "cat README", "bash": "cat README.md"}
+{"guard": "secrets", "label": "list ssh dir", "bash": "ls -la ~/.ssh"}
+{"guard": "secrets", "label": "runtime var-file", "bash": "terraform apply -var-file=prod.tfvars"}
+{"guard": "secrets", "label": "grep docs for prod", "bash": "grep -rn prod docs/"}
+{"guard": "secrets", "label": "read .env.example", "tool": "Read", "file_path": ".env.example", "known_miss": true, "issue": 26}
+{"guard": "secrets", "label": "grep .env.example", "bash": "grep API_KEY .env.example", "known_miss": true, "issue": 26}
+{"guard": "secrets", "label": "cat .env.sample", "bash": "cat .env.sample", "known_miss": true, "issue": 26}
+{"guard": "secrets", "label": "search code for access_token", "bash": "rg access_token src/", "known_miss": true, "issue": 26}
+{"guard": "secrets", "label": "cat refresh_token.py", "bash": "cat src/auth/refresh_token.py", "known_miss": true, "issue": 26}
+{"guard": "secrets", "label": "read refresh_token.py", "tool": "Read", "file_path": "src/auth/refresh_token.py", "known_miss": true, "issue": 26}
+{"guard": "main", "label": "git status", "bash": "git status"}
+{"guard": "main", "label": "git add a named path", "bash": "git add src/main.py"}
+{"guard": "main", "label": "git add -p", "bash": "git add -p"}
+{"guard": "main", "label": "git log --all", "bash": "git log --all --oneline"}
+{"guard": "main", "label": "commit on a topic branch", "bash": "git commit -m 'fix: typo'", "branch": "fix/typo"}
+{"guard": "main", "label": "amend on a topic branch", "bash": "git commit --amend --no-edit", "branch": "fix/typo"}
+{"guard": "main", "label": "commit message mentions -a", "bash": "git commit -m \"remove the -a flag\"", "branch": "fix/typo", "known_miss": true, "issue": 27}
+{"guard": "prod", "label": "kubectl get in prod", "bash": "kubectl -n prod get pods"}
+{"guard": "prod", "label": "kubectl logs in prod", "bash": "kubectl -n prod logs api-1 --previous"}
+{"guard": "prod", "label": "kubectl get, prod context flag", "bash": "kubectl --context prod-eu get nodes"}
+{"guard": "prod", "label": "rollout status in prod", "bash": "kubectl -n prod rollout status deployment/api"}
+{"guard": "prod", "label": "helm get values in production", "bash": "helm -n production get values api"}
+{"guard": "prod", "label": "delete in dev", "bash": "kubectl -n dev delete pod api-1"}
+{"guard": "prod", "label": "kubectl delete, dev current-context", "bash": "kubectl delete deployment api", "env": {"KUBECONFIG": "fixtures/dev-context.yaml"}}
+{"guard": "prod", "label": "liveness is not live", "bash": "kubectl apply -f k8s/liveness-probe.yaml"}
+{"guard": "prod", "label": "reproduce is not prod", "bash": "pytest tests/test_reproduce.py"}
+{"guard": "prod", "label": "terraform plan prod", "bash": "terraform plan -var-file=prod.tfvars"}
+{"guard": "prod", "label": "explicit PROD_OK", "bash": "PROD_OK=1 kubectl -n prod rollout undo deployment/api"}
+{"guard": "prod", "label": "az aks show prod", "bash": "az aks show -n prod-cluster -g rg"}
+{"guard": "prod", "label": "pulumi preview production", "bash": "pulumi preview --stack production"}
+{"guard": "prod", "label": "kubectl exec curl in prod", "bash": "kubectl -n prod exec api-1 -- curl -s localhost/healthz", "known_miss": true, "issue": 24}
+{"guard": "prod", "label": "ssh tail syslog on prod", "bash": "ssh prod-db-01 tail -n 50 /var/log/syslog", "known_miss": true, "issue": 24}

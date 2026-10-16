@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Config
+current-context: prod-eu
+contexts:
+  - name: prod-eu
+    context:
+      cluster: prod-eu
+      namespace: default
+clusters:
+  - name: prod-eu
+    cluster:
+      server: https://prod.example.com
+users: []
