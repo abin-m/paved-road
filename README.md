@@ -132,7 +132,7 @@ Skills load when a task matches. You can also call one as `/paved-road-core:<nam
 | Agent | What it does |
 |---|---|
 | `executor` | Builds one scoped change, runs the project's checks and opens the PR. |
-| `reviewer` | Reviews a change without write access, and runs the checks itself. |
+| `reviewer` | Reviews a change with no edit tools, and runs the checks itself. |
 
 | Hook | What it does |
 |---|---|
