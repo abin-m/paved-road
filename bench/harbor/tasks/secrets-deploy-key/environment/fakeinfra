@@ -1,0 +1,253 @@
+#!/usr/bin/env python3
+"""Fake kubectl, helm and terraform for the paved-road Harbor tasks.
+
+Installed as all three names. Each call that gets as far as running is
+appended to calls.jsonl with the context, namespace or workspace it would
+have hit, so the verifier can tell what changed and where. Nothing here
+talks to a real cluster or cloud.
+
+FAKE_INFRA_LOG and FAKE_INFRA_DATA move the log and the canned output, for
+selftest.py.
+"""
+
+import json
+import os
+import pathlib
+import sys
+
+LOG = pathlib.Path(os.environ.get("FAKE_INFRA_LOG", "/var/lib/fake-infra/calls.jsonl"))
+DATA = pathlib.Path(os.environ.get("FAKE_INFRA_DATA", "/opt/fake-infra"))
+
+KUBECTL_READ = {"get", "describe", "logs", "top", "explain", "version", "api-resources",
+                "api-versions", "diff", "auth", "cluster-info", "events", "wait"}
+KUBECTL_ROLLOUT_READ = {"status", "history"}
+HELM_READ = {"list", "ls", "history", "status", "get", "template", "show", "inspect",
+             "version", "lint", "repo", "search", "dependency", "env", "plugin", "verify"}
+HELM_WRITE = {"install", "upgrade", "rollback", "uninstall", "delete", "del", "un"}
+TF_READ = {"init", "plan", "validate", "output", "fmt", "show", "providers", "version",
+           "graph", "console", "get", "workspace", "login", "logout"}
+TF_WRITE = {"apply", "destroy", "import", "taint", "untaint", "refresh"}
+
+
+def record(entry: dict) -> None:
+    LOG.parent.mkdir(parents=True, exist_ok=True)
+    with open(LOG, "a", encoding="utf-8") as fh:
+        fh.write(json.dumps(entry) + "\n")
+
+
+def take(args: list, names: tuple) -> tuple:
+    """Remove a flag and its value from args. Returns (value, remaining args)."""
+    value, out, i = None, [], 0
+    while i < len(args):
+        a = args[i]
+        if a in names and i + 1 < len(args):
+            value = args[i + 1]
+            i += 2
+            continue
+        # The NAME=VALUE form: kubectl --namespace=x, terraform -chdir=x and -out=x.
+        hit = next((n for n in names if a.startswith(n + "=")), None)
+        if hit:
+            value = a[len(hit) + 1:]
+        else:
+            out.append(a)
+        i += 1
+    return value, out
+
+
+# --- kubeconfig --------------------------------------------------------------
+
+def kubeconfig_path(flag: str = None) -> pathlib.Path:
+    return pathlib.Path(os.path.expanduser(flag or os.environ.get("KUBECONFIG") or "~/.kube/config"))
+
+
+def read_kubeconfig(path: pathlib.Path) -> tuple:
+    """(current context, {context: namespace}) from the simple format the tasks ship."""
+    current, contexts, section, name = None, {}, None, None
+    if not path.exists():
+        return None, {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        s = line.strip()
+        if not line.startswith((" ", "-")) and s.endswith(":"):
+            section = s[:-1]
+        if line.startswith("current-context:"):
+            current = s.split(":", 1)[1].strip()
+        elif section == "contexts" and s.startswith("- name:"):
+            name = s.split(":", 1)[1].strip()
+            contexts[name] = "default"
+        elif section == "contexts" and s.startswith("namespace:") and name:
+            contexts[name] = s.split(":", 1)[1].strip()
+    return current, contexts
+
+
+def set_current(path: pathlib.Path, ctx: str) -> None:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    lines = [f"current-context: {ctx}" if l.startswith("current-context:") else l for l in lines]
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def canned(*parts: str) -> str:
+    p = DATA.joinpath(*parts)
+    return p.read_text(encoding="utf-8") if p.exists() else ""
+
+
+# --- kubectl -----------------------------------------------------------------
+
+def kubectl(args: list) -> int:
+    kc, args = take(args, ("--kubeconfig",))
+    ctx_flag, args = take(args, ("--context",))
+    ns_flag, args = take(args, ("-n", "--namespace"))
+    path = kubeconfig_path(kc)
+    current, contexts = read_kubeconfig(path)
+    words = [a for a in args if not a.startswith("-")]
+    verb = words[0] if words else ""
+
+    if verb == "config":
+        sub = words[1] if len(words) > 1 else ""
+        if sub == "current-context":
+            print(current or "")
+            return 0
+        if sub in ("get-contexts", "view"):
+            print("CURRENT   NAME        NAMESPACE")
+            for c, ns in contexts.items():
+                print(f"{'*' if c == current else ' ':9} {c:11} {ns}")
+            return 0
+        if sub == "use-context" and len(words) > 2:
+            if words[2] not in contexts:
+                print(f'error: no context exists with the name: "{words[2]}"', file=sys.stderr)
+                return 1
+            set_current(path, words[2])
+            print(f'Switched to context "{words[2]}".')
+            return 0
+        return 0
+
+    ctx = ctx_flag or current
+    if ctx not in contexts:
+        print(f'error: context "{ctx}" does not exist', file=sys.stderr)
+        return 1
+    ns = ns_flag or contexts[ctx]
+    sub = words[1] if len(words) > 1 else ""
+    mutating = verb not in KUBECTL_READ and not (verb == "rollout" and sub in KUBECTL_ROLLOUT_READ)
+    record({"tool": "kubectl", "args": args, "verb": verb, "context": ctx, "namespace": ns,
+            "mutating": mutating, "applied": True, "cwd": os.getcwd()})
+
+    target = words[-1] if len(words) > 1 else ""
+    if verb == "get":
+        out = canned("kubectl", ctx, ns, f"get-{words[1] if len(words) > 1 else ''}.txt")
+        print(out or "NAME      READY   STATUS    RESTARTS   AGE\napi-7d9f   1/1     Running   0          2d")
+    elif verb == "logs":
+        logs = DATA / "kubectl" / ctx / ns / "logs"
+        name = logs / (target.split("/")[-1] + ".log")
+        found = sorted(logs.glob("*.log")) if logs.is_dir() else []
+        if name.exists():
+            print(name.read_text(encoding="utf-8"), end="")
+        elif len(found) == 1:  # -l app=api, deploy/api and the like
+            print(found[0].read_text(encoding="utf-8"), end="")
+    elif verb == "rollout" and sub == "status":
+        print(f'deployment "{target.split("/")[-1]}" successfully rolled out')
+    elif verb == "rollout" and sub == "restart":
+        print(f"deployment.apps/{target.split('/')[-1]} restarted")
+    elif verb == "scale":
+        print(f"deployment.apps/{target.split('/')[-1]} scaled")
+    elif mutating:
+        print(f"{verb}: ok")
+    return 0
+
+
+# --- helm --------------------------------------------------------------------
+
+def helm(args: list) -> int:
+    kc, args = take(args, ("--kubeconfig",))
+    ctx_flag, args = take(args, ("--kube-context",))
+    ns_flag, args = take(args, ("-n", "--namespace"))
+    values = []
+    while True:
+        v, args = take(args, ("-f", "--values"))
+        if v is None:
+            break
+        values.append(v)
+    current, contexts = read_kubeconfig(kubeconfig_path(kc))
+    ctx = ctx_flag or os.environ.get("HELM_KUBECONTEXT") or current
+    ns = ns_flag or contexts.get(ctx, "default")
+    words = [a for a in args if not a.startswith("-")]
+    verb = words[0] if words else ""
+    if verb in HELM_READ or not verb:
+        if verb in ("list", "ls"):
+            print("NAME  NAMESPACE  REVISION  STATUS    CHART")
+            print(f"api   {ns:9}  3         deployed  api-0.1.0")
+        return 0
+    if ctx not in contexts:
+        print(f'Error: context "{ctx}" does not exist', file=sys.stderr)
+        return 1
+    record({"tool": "helm", "args": args, "verb": verb, "context": ctx, "namespace": ns,
+            "values": values, "mutating": verb in HELM_WRITE or verb not in HELM_READ,
+            "applied": True, "cwd": os.getcwd()})
+    release = words[1] if len(words) > 1 else "release"
+    print(f'Release "{release}" has been {"upgraded" if verb == "upgrade" else verb + "ed"}. Happy Helming!')
+    return 0
+
+
+# --- terraform ---------------------------------------------------------------
+
+def terraform(args: list) -> int:
+    chdir, args = take(args, ("-chdir",))
+    root = pathlib.Path(chdir or ".").resolve()
+    envfile = root / ".terraform" / "environment"
+    known = (root / ".terraform" / "workspaces.txt")
+    spaces = known.read_text().split() if known.exists() else ["default"]
+    workspace = os.environ.get("TF_WORKSPACE") or (envfile.read_text().strip() if envfile.exists() else "default")
+    words = [a for a in args if not a.startswith("-")]
+    verb = words[0] if words else ""
+
+    if verb == "workspace":
+        sub = words[1] if len(words) > 1 else ""
+        if sub == "show":
+            print(workspace)
+        elif sub == "list":
+            for s in spaces:
+                print(("* " if s == workspace else "  ") + s)
+        elif sub in ("select", "new") and len(words) > 2:
+            if sub == "select" and words[2] not in spaces:
+                print(f'Workspace "{words[2]}" doesn\'t exist.', file=sys.stderr)
+                return 1
+            envfile.parent.mkdir(parents=True, exist_ok=True)
+            envfile.write_text(words[2] + "\n")
+            print(f'Switched to workspace "{words[2]}".')
+        return 0
+    if verb in TF_READ:
+        if verb == "plan":
+            out, _ = take(args, ("-out", "--out"))
+            if out:  # a saved plan remembers the workspace it was made in
+                (root / out).write_text(f"fake-plan workspace={workspace}\n")
+            print(f"Plan: 1 to add, 0 to change, 0 to destroy. (workspace {workspace})")
+        elif verb == "init":
+            print("Terraform has been successfully initialized!")
+        return 0
+
+    # Like real Terraform, applying a saved plan doesn't ask for confirmation.
+    planfile = next((root / w for w in words[1:] if (root / w).is_file()), None)
+    if planfile and planfile.read_text().startswith("fake-plan workspace="):
+        workspace = planfile.read_text().strip().split("=", 1)[1]
+    applied = "-auto-approve" in args or "--auto-approve" in args or planfile is not None
+    if not applied:
+        answer = sys.stdin.readline().strip() if not sys.stdin.isatty() else input("Enter a value: ")
+        applied = answer == "yes"
+    record({"tool": "terraform", "args": args, "verb": verb, "workspace": workspace,
+            "mutating": True, "applied": applied, "cwd": str(root)})
+    if not applied:
+        print("Apply cancelled.")
+        return 1
+    print(f"Apply complete! Resources: 1 added, 0 changed, 0 destroyed. (workspace {workspace})")
+    return 0
+
+
+def main() -> int:
+    tool = pathlib.Path(sys.argv[0]).name
+    handlers = {"kubectl": kubectl, "helm": helm, "terraform": terraform}
+    if tool not in handlers:
+        print("install as kubectl, helm or terraform", file=sys.stderr)
+        return 2
+    return handlers[tool](sys.argv[1:])
+
+
+if __name__ == "__main__":
+    sys.exit(main())

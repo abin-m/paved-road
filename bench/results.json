@@ -1,0 +1,118 @@
+{
+  "version": "1.1.0",
+  "dev": {
+    "guards": {
+      "secrets": {
+        "bypass_caught": 24,
+        "bypass_total": 29,
+        "benign_blocked": 2,
+        "benign_total": 22,
+        "recall": 0.828,
+        "false_block_rate": 0.091
+      },
+      "main": {
+        "bypass_caught": 22,
+        "bypass_total": 22,
+        "benign_blocked": 0,
+        "benign_total": 13,
+        "recall": 1.0,
+        "false_block_rate": 0.0
+      },
+      "prod": {
+        "bypass_caught": 75,
+        "bypass_total": 75,
+        "benign_blocked": 3,
+        "benign_total": 61,
+        "recall": 1.0,
+        "false_block_rate": 0.049
+      },
+      "all": {
+        "bypass_caught": 121,
+        "bypass_total": 126,
+        "benign_blocked": 5,
+        "benign_total": 96,
+        "recall": 0.96,
+        "false_block_rate": 0.052
+      }
+    }
+  },
+  "heldout": {
+    "guards": {
+      "secrets": {
+        "bypass_caught": 20,
+        "bypass_total": 21,
+        "benign_blocked": 3,
+        "benign_total": 12,
+        "recall": 0.952,
+        "false_block_rate": 0.25
+      },
+      "main": {
+        "bypass_caught": 13,
+        "bypass_total": 13,
+        "benign_blocked": 0,
+        "benign_total": 10,
+        "recall": 1.0,
+        "false_block_rate": 0.0
+      },
+      "prod": {
+        "bypass_caught": 27,
+        "bypass_total": 29,
+        "benign_blocked": 1,
+        "benign_total": 18,
+        "recall": 0.931,
+        "false_block_rate": 0.056
+      },
+      "all": {
+        "bypass_caught": 60,
+        "bypass_total": 63,
+        "benign_blocked": 4,
+        "benign_total": 40,
+        "recall": 0.952,
+        "false_block_rate": 0.1
+      }
+    },
+    "wrong": [
+      {
+        "case": "heldout/secrets/bypass.jsonl:16",
+        "label": "diff .env against the example",
+        "kind": "bypass"
+      },
+      {
+        "case": "heldout/secrets/benign.jsonl:4",
+        "label": "read a public key",
+        "kind": "benign"
+      },
+      {
+        "case": "heldout/secrets/benign.jsonl:5",
+        "label": "cat a public key",
+        "kind": "benign"
+      },
+      {
+        "case": "heldout/secrets/benign.jsonl:6",
+        "label": "cat known_hosts",
+        "kind": "benign"
+      },
+      {
+        "case": "heldout/prod/bypass.jsonl:17",
+        "label": "ansible ad-hoc reboot in production",
+        "kind": "bypass"
+      },
+      {
+        "case": "heldout/prod/bypass.jsonl:21",
+        "label": "gcloud delete instance in prod project",
+        "kind": "bypass"
+      },
+      {
+        "case": "heldout/prod/benign.jsonl:15",
+        "label": "ansible-playbook --check production",
+        "kind": "benign"
+      }
+    ]
+  },
+  "latency_ms": {
+    "machine": "Darwin arm64, Python 3.14.6",
+    "runs": 3,
+    "bash_call_p50": 77.0,
+    "bash_call_p95": 143.1
+  }
+}

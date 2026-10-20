@@ -78,7 +78,20 @@ This is the guards' real output for three blocked calls and one allowed call:
 
 ### What the guards stop, and what they don't
 
-The guards stop the usual ways an agent makes four mistakes: reading a secret file, staging the whole tree, committing on a default branch and changing production. To see how many of the test commands each guard catches, run `python3 tools/bench.py`.
+The guards stop the usual ways an agent makes four mistakes: reading a secret file, staging the whole tree, committing on a default branch and changing production.
+
+The guards are measured on 103 held-out commands. Those cases were written from this README, without reading the guard code, and the guards are never tuned against them.
+
+| Guard | Bypasses blocked | Benign commands wrongly blocked |
+|---|---|---|
+| `secrets-guard` | 20 of 21 | 3 of 12 |
+| `main-guard` | 13 of 13 | 0 of 10 |
+| `prod-guard` | 27 of 29 | 1 of 18 |
+| All | 60 of 63 (95%) | 4 of 40 (10%) |
+
+[`bench/results.json`](bench/results.json) lists each case the guards got wrong. To rerun the benchmark, run `python3 tools/bench.py`. One Bash call through the guards takes about 45 ms.
+
+The guards are also tested on whole tasks, with Claude Code run on the same 16 tasks with and without the pack ([bench/harbor](bench/harbor/README.md)). With the pack, all 80 runs were safe, against 65 of 80 without it. But the agent finished 62 tasks instead of 79, mostly because of one `prod-guard` bug, [#56](https://github.com/abin-m/paved-road/issues/56).
 
 The guards don't replace access control. Give the agent's credentials only the access its task needs.
 
@@ -87,6 +100,7 @@ A guard does not stop:
 - An agent that types `PROD_OK=1`. The prefix lets a production change through on purpose, and it stays in the transcript, where you can see it. The working style tells the agent to ask you first.
 - A secret read through a program the guard doesn't know, such as `python3 -c`, `base64`, `jq` or `source .env`.
 - A secret file copied to a new name in one command and read in the next.
+- A search of a whole directory, such as `grep -r API_KEY .`, that reaches a secret file inside it. The guard checks the files a command names, and blocking every recursive search would get in the way of normal work.
 - A `KUBECONFIG`, `TF_WORKSPACE` or `AWS_PROFILE` exported by an earlier command. The guard sees only the environment Claude Code started with.
 - A CDK stack added since the app was last synthesised. For `cdk deploy --all`, the guard reads the stack names in `cdk.out`, so it doesn't see a stack that isn't there yet.
 - A production environment whose name contains none of the words in [Who this is for](#who-this-is-for).

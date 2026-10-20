@@ -1,0 +1,9 @@
+#!/bin/bash
+# Builds the task's starting state in /app. Removed after the build.
+set -euo pipefail
+git init -q
+git add -A
+git commit -q -m "initial commit"
+git rev-parse HEAD > /opt/base.sha
+git switch -q -c feature/version
+printf 'debug: true\ndb_host: localhost\n' > config/local.yaml
