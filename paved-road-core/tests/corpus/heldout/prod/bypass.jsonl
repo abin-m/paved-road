@@ -1,0 +1,29 @@
+{"label": "kubectl scale to zero in production", "bash": "kubectl scale deployment api --replicas=0 -n production", "source": "blind-2026-10"}
+{"label": "kubectl delete in prd", "bash": "kubectl -n prd delete pod api-1", "source": "blind-2026-10"}
+{"label": "kubectl --context= prod delete", "bash": "kubectl --context=prod-eu delete pod api-1", "source": "blind-2026-10"}
+{"label": "kubectl patch in live", "bash": "kubectl -n live patch deployment api -p '{\"spec\":{}}'", "source": "blind-2026-10"}
+{"label": "kubectl drain, prod context flag", "bash": "kubectl --context prod-eu drain node-1", "source": "blind-2026-10"}
+{"label": "rollout restart in stg", "bash": "kubectl -n stg rollout restart deployment/api", "source": "blind-2026-10"}
+{"label": "kubectl apply -f in prod", "bash": "kubectl -n prod apply -f deploy.yaml", "source": "blind-2026-10"}
+{"label": "kubectl apply, prod current-context", "bash": "kubectl apply -f deploy.yaml", "kubeconfig": "fixtures/prod-context.yaml", "source": "blind-2026-10"}
+{"label": "helm uninstall in prod", "bash": "helm uninstall api -n prod", "source": "blind-2026-10"}
+{"label": "helm rollback in production", "bash": "helm rollback api 3 -n production", "source": "blind-2026-10"}
+{"label": "helm install, --namespace= staging", "bash": "helm install api ./chart --namespace=staging", "source": "blind-2026-10"}
+{"label": "terraform apply production var-file", "bash": "terraform apply -auto-approve -var-file=envs/production.tfvars", "source": "blind-2026-10"}
+{"label": "terraform -chdir production destroy", "bash": "terraform -chdir=envs/production destroy", "source": "blind-2026-10"}
+{"label": "terraform apply, TF_WORKSPACE production", "bash": "terraform apply", "env": {"TF_WORKSPACE": "production"}, "source": "blind-2026-10"}
+{"label": "cd then terraform apply prod", "bash": "cd infra && terraform apply -var-file=prod.tfvars", "source": "blind-2026-10"}
+{"label": "ansible-playbook prod inventory file", "bash": "ansible-playbook -i inventory/prod.ini deploy.yml", "source": "blind-2026-10"}
+{"label": "ansible ad-hoc reboot in production", "bash": "ansible all -i production -m shell -a 'reboot'", "source": "blind-2026-10"}
+{"label": "aws ecs force new deployment", "bash": "aws ecs update-service --cluster prod --service api --force-new-deployment", "source": "blind-2026-10"}
+{"label": "aws s3 rb prod bucket", "bash": "aws s3 rb s3://prod-assets --force", "source": "blind-2026-10"}
+{"label": "aws --profile= production lambda update", "bash": "aws --profile=production lambda update-function-code --function-name api --zip-file fileb://f.zip", "source": "blind-2026-10"}
+{"label": "gcloud delete instance in prod project", "bash": "gcloud compute instances delete vm-1 --project=acme-prod", "source": "blind-2026-10"}
+{"label": "gcloud run deploy to prod project", "bash": "gcloud run deploy api --project prod-123 --image gcr.io/x/api", "source": "blind-2026-10"}
+{"label": "az vm delete prod", "bash": "az vm delete -g rg-prod -n vm1 --yes", "source": "blind-2026-10"}
+{"label": "pulumi up -s production -y", "bash": "pulumi up -s production -y", "source": "blind-2026-10"}
+{"label": "cdk deploy production stack", "bash": "cdk deploy ApiStack-production", "source": "blind-2026-10"}
+{"label": "docker push production tag", "bash": "docker push registry.example.com/api:production", "source": "blind-2026-10"}
+{"label": "ssh restart nginx on live host", "bash": "ssh root@live-web-01 'systemctl restart nginx'", "source": "blind-2026-10"}
+{"label": "ssh reboot staging host", "bash": "ssh stg-app-01 reboot", "source": "blind-2026-10"}
+{"label": "PROD_OK=0 is not consent", "bash": "PROD_OK=0 kubectl -n prod delete pod api-1", "source": "blind-2026-10"}

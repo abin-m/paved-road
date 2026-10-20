@@ -1,0 +1,10 @@
+{"label": "add two named directories", "bash": "git add src/ tests/", "source": "blind-2026-10"}
+{"label": "add -- a named file", "bash": "git add -- README.md", "source": "blind-2026-10"}
+{"label": "add -N a new file", "bash": "git add -N newfile.py", "source": "blind-2026-10"}
+{"label": "diff staged", "bash": "git diff --staged", "source": "blind-2026-10"}
+{"label": "commit on a feature branch", "bash": "git commit -m 'feat: add api'", "branch": "feature/add-api", "source": "blind-2026-10"}
+{"label": "new branch from main", "bash": "git checkout -b fix/x", "branch": "main", "source": "blind-2026-10"}
+{"label": "status then add a named file", "bash": "git status && git add docs/install.md", "source": "blind-2026-10"}
+{"label": "log main..HEAD", "bash": "git log main..HEAD --oneline", "source": "blind-2026-10"}
+{"label": "commit message quotes git add .", "bash": "git commit -m 'docs: explain why not git add .'", "branch": "fix/docs", "source": "blind-2026-10"}
+{"label": "unstage everything", "bash": "git restore --staged .", "source": "blind-2026-10"}
