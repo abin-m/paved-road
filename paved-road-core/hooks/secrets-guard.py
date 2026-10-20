@@ -62,6 +62,35 @@ def why_secret(path: str) -> str:
     return ""
 
 
+# A word that could be a path.
+TOKEN_RE = r"[\w./~@-]+"
+
+
+def command_words(cmd: str) -> list:
+    """The words of each command in a chain, split on ;, |, && and ||.
+
+    Quotes are respected, so `grep "a|b" f` stays one command (#57). A line
+    that doesn't parse is skipped, as before.
+    """
+    commands = []
+    for line in cmd.splitlines():
+        lex = shlex.shlex(line, posix=True, punctuation_chars=";|&")
+        lex.whitespace_split = True
+        try:
+            words = list(lex)
+        except ValueError:
+            continue
+        current = []
+        for word in words:
+            if word and set(word) <= set(";|&"):
+                commands.append(current)
+                current = []
+            else:
+                current.append(word)
+        commands.append(current)
+    return [c for c in commands if c]
+
+
 def pattern_args(cmd: str) -> list:
     """Pattern and program arguments of grep, rg, awk and sed in cmd.
 
@@ -69,11 +98,7 @@ def pattern_args(cmd: str) -> list:
     called access_token, so that word is not checked as a path.
     """
     found = []
-    for segment in re.split(r"&&|\|\||[;|\n]", cmd):
-        try:
-            words = shlex.split(segment)
-        except ValueError:
-            continue
+    for words in command_words(cmd):
         if not words or os.path.basename(words[0]) not in PATTERN_FIRST:
             continue
         args = words[1:]
@@ -102,10 +127,14 @@ def check(event: dict) -> str:
         # Only inspect tokens that look like paths, and only when the command
         # actually starts with a reader — `grep foo .env` counts, `ls` does not.
         if re.search(rf"(^|[;&|]\s*){READERS}\s", cmd):
-            tokens = re.findall(r"[\w./~@-]+", cmd)
+            tokens = re.findall(TOKEN_RE, cmd)
+            # A pattern such as `environ|process\.env` splits into several
+            # tokens. Drop each one once, so the pattern is never taken for a
+            # path, but a real file argument with the same name still is (#57).
             for pattern in pattern_args(cmd):
-                if pattern in tokens:
-                    tokens.remove(pattern)
+                for part in re.findall(TOKEN_RE, pattern):
+                    if part in tokens:
+                        tokens.remove(part)
             for token in tokens:
                 reason = why_secret(token)
                 if reason:
