@@ -36,7 +36,7 @@ PLUGIN = ROOT / "paved-road-core"
 # The floor the README promises consumers.
 PY_FLOOR = (3, 9)
 
-KEBAB_EXEMPT = {"README.md", "SKILL.md", "LICENSE", "CLAUDE.md", "AGENTS.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "SECURITY.md"}
+KEBAB_EXEMPT = {"README.md", "SKILL.md", "LICENSE", "CLAUDE.md", "AGENTS.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "SECURITY.md", "Dockerfile", "Chart.yaml"}  # the last two: names the tools require
 KEBAB_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*(\.[a-z0-9.]+)?$")
 # Python mandates snake_case for anything `import`ed — a hyphen is a syntax
 # error in an import statement. Shared libraries beside the entry points are
@@ -152,11 +152,24 @@ def check_hooks() -> None:
             err(f"hooks/{name} has no case in tests/guards.test.py")
 
 
+def is_task_repo(path: pathlib.Path) -> bool:
+    """True inside a Harbor task's starting repo, bench/harbor/tasks/<task>/environment/app/.
+
+    That folder stands in for someone else's project, so it keeps the names a
+    real Python project uses, such as __init__.py and test_parse.py.
+    """
+    parts = path.relative_to(ROOT).parts
+    return parts[:3] == ("bench", "harbor", "tasks") and parts[4:6] == ("environment", "app")
+
+
 def check_names() -> None:
     for path in sorted(ROOT.rglob("*")):
-        if any(part in {".git", ".github", "__pycache__"} for part in path.parts):
+        # jobs/ holds Harbor's run output, which git ignores.
+        if any(part in {".git", ".github", "__pycache__"} for part in path.parts) or path.relative_to(ROOT).parts[0] == "jobs":
             continue
         if not path.is_file() or path.name in KEBAB_EXEMPT or path.name.startswith("."):
+            continue
+        if is_task_repo(path):
             continue
         if LIB_RE.match(path.name):
             continue

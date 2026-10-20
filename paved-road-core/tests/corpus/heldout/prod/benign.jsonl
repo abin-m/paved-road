@@ -1,0 +1,18 @@
+{"label": "kubectl describe in prod", "bash": "kubectl -n prod describe pod api-1", "source": "blind-2026-10"}
+{"label": "kubectl top in production", "bash": "kubectl -n production top pods", "source": "blind-2026-10"}
+{"label": "kubectl get events in staging", "bash": "kubectl -n staging get events", "source": "blind-2026-10"}
+{"label": "kubectl diff -k production overlay", "bash": "kubectl diff -k overlays/production", "source": "blind-2026-10"}
+{"label": "helm history in prod", "bash": "helm -n prod history api", "source": "blind-2026-10"}
+{"label": "helm list in production", "bash": "helm list -n production", "source": "blind-2026-10"}
+{"label": "helm template with prod values", "bash": "helm template api ./chart -f values-prod.yaml", "source": "blind-2026-10"}
+{"label": "terraform -chdir prod plan", "bash": "terraform -chdir=envs/prod plan", "source": "blind-2026-10"}
+{"label": "terraform output, prod workspace", "bash": "terraform output", "cwd": "fixtures/tf-prod", "source": "blind-2026-10"}
+{"label": "terraform validate, prod workspace", "bash": "terraform validate", "cwd": "fixtures/tf-prod", "source": "blind-2026-10"}
+{"label": "aws ecs describe prod", "bash": "aws ecs describe-services --cluster prod --services api", "source": "blind-2026-10"}
+{"label": "gcloud list instances in prod project", "bash": "gcloud compute instances list --project acme-prod", "source": "blind-2026-10"}
+{"label": "cdk diff production stack", "bash": "cdk diff ApiStack-production", "source": "blind-2026-10"}
+{"label": "docker pull prod tag", "bash": "docker pull registry.example.com/api:prod", "source": "blind-2026-10"}
+{"label": "ansible-playbook --check production", "bash": "ansible-playbook -i inventories/production site.yml --check", "source": "blind-2026-10"}
+{"label": "grep config for production", "bash": "grep -rn production config/", "source": "blind-2026-10"}
+{"label": "cat prod values file", "bash": "cat deploy/prod/values.yaml", "source": "blind-2026-10"}
+{"label": "kubectl delete in a preview namespace", "bash": "kubectl -n preview delete pod api-1", "source": "blind-2026-10"}

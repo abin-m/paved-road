@@ -1,0 +1,13 @@
+{"label": "commit --no-verify on main", "bash": "git commit --no-verify -m 'fix: typo'", "branch": "main", "source": "blind-2026-10"}
+{"label": "amend on main", "bash": "git commit --amend --no-edit", "branch": "main", "source": "blind-2026-10"}
+{"label": "git -c before commit on main", "bash": "git -c user.name=bot commit -m 'fix: typo'", "branch": "main", "source": "blind-2026-10"}
+{"label": "env prefix before commit on main", "bash": "GIT_AUTHOR_NAME=bot git commit -m 'fix: typo'", "branch": "main", "source": "blind-2026-10"}
+{"label": "commit on main after a chain", "bash": "git status && git commit -m 'fix: typo'", "branch": "main", "source": "blind-2026-10"}
+{"label": "git add --all .", "bash": "git add --all .", "source": "blind-2026-10"}
+{"label": "git add -A .", "bash": "git add -A .", "source": "blind-2026-10"}
+{"label": "cd then git add .", "bash": "cd src && git add .", "source": "blind-2026-10"}
+{"label": "add -A then commit", "bash": "git add -A; git commit -m wip", "branch": "fix/typo", "source": "blind-2026-10"}
+{"label": "git commit -a", "bash": "git commit -a -m 'fix: typo'", "branch": "fix/typo", "source": "blind-2026-10"}
+{"label": "git commit --all", "bash": "git commit --all -m 'fix: typo'", "branch": "fix/typo", "source": "blind-2026-10"}
+{"label": "add . inside sh -c", "bash": "sh -c \"git add .\"", "source": "blind-2026-10"}
+{"label": "git add -fA", "bash": "git add -fA", "source": "blind-2026-10"}

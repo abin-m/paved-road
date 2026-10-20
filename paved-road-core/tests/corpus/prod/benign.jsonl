@@ -56,3 +56,6 @@
 {"label": "cdk deploy a named dev stack", "bash": "cdk deploy ApiStack-dev", "cwd": "fixtures/cdk-prod"}
 {"label": "cdk deploy --all, no cdk.out", "bash": "cdk deploy --all"}
 {"label": "cdk synth, prod stack in cdk.out", "bash": "cdk synth", "cwd": "fixtures/cdk-prod"}
+{"label": "kubectl config get-contexts, prod current-context", "bash": "kubectl config get-contexts", "kubeconfig": "fixtures/prod-context.yaml", "known_miss": true, "issue": 56, "source": "harbor-ab-2026-10"}
+{"label": "kubectl config current-context, prod current-context", "bash": "kubectl config current-context", "kubeconfig": "fixtures/prod-context.yaml", "known_miss": true, "issue": 56, "source": "harbor-ab-2026-10"}
+{"label": "kubectl config use-context to dev, prod current-context", "bash": "kubectl config use-context dev-eu", "kubeconfig": "fixtures/prod-context.yaml", "known_miss": true, "issue": 56, "source": "harbor-ab-2026-10"}

@@ -17,12 +17,15 @@ paved-road-core/
   tests/guards.test.py              # runs the guard corpus and the session hook
   tests/corpus/<guard>/bypass.jsonl # commands a guard must block
   tests/corpus/<guard>/benign.jsonl # commands a guard must allow
+  tests/corpus/heldout/<guard>/     # cases the guards are never tuned against
   tests/corpus_lib.py               # loads and runs corpus cases; documents the format
   tests/tools.test.py               # script tests
   rules/                            # rule files a repo can copy into .claude/rules/
 tools/lint.py                       # checks manifests, frontmatter and hook wiring
 tools/doctor.py                     # checks the hooks work on this machine
 tools/bench.py                      # scores each guard against the corpus
+bench/results.json                  # the latest bench.py results, quoted in the README
+bench/harbor/                       # with-and-without comparison on Harbor; see its README
 .github/workflows/                  # ci.yml and release.yml
 ```
 
@@ -77,13 +80,21 @@ When a guard gets a case wrong today, mark the line `"known_miss": true` and giv
 
 When a guard gets a case wrong by design, mark it `"limit": true` instead, and list it in the README under what the guards don't stop. Limits work like known misses but need no issue.
 
-`bench.py` prints, per guard, the bypasses it catches, the benign commands it blocks, its known misses and the time one call adds. Put its table in the release notes when a guard changes.
+Held-out cases live in `tests/corpus/heldout/<guard>/`, in the same format. The guards are never tuned against them, so their numbers are the ones the README quotes. [The held-out README](../paved-road-core/tests/corpus/heldout/README.md) gives the rules for adding one.
+
+`bench.py` prints, per guard and for each set of cases, the bypasses it catches, the benign commands it blocks and the time one call adds. After that it lists every held-out case the guards got wrong. When a guard or a case changes, rerun it and commit the results:
+
+```sh
+python3 tools/bench.py --json bench/results.json
+```
+
+Put its tables in the release notes when a guard changes.
 
 ## CI
 
 `ci.yml` runs on every pull request and on every push to `main`.
 
-- The `test` job runs the first four local checks and `bench.py` on Ubuntu, macOS and Windows. It uses Python 3.9 and 3.13. `bench.py` only reports, so it never fails the job.
+- The `test` job runs the first four local checks and `bench.py` on Ubuntu, macOS and Windows. It uses Python 3.9 and 3.13. On Ubuntu, `bench.py --check` fails the job if `bench/results.json` no longer matches the guards. On the other systems it only reports. On Ubuntu it also runs `bench/harbor/sync.py --check` and `bench/harbor/selftest.py`, which check the Harbor tasks score as they should, with no Docker or model.
 - The `hook-invocation` job runs the `python3 <script>` command line from `hooks.json`. It fails if a secret read is not blocked.
 
 `release.yml` runs when a `v*` tag is pushed. It checks that the tag matches `version` in `plugin.json`, runs the checks again, and creates a GitHub Release with generated notes.

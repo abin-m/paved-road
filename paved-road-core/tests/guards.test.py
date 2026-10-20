@@ -7,7 +7,8 @@ case also runs through bash-guards.py, the hook Claude Code runs, which
 applies all three guards: a benign command must pass all of them. A known miss passes while
 the guard still gets it wrong, and fails once the guard is fixed, so the
 known_miss flag is removed in the same change. A documented limit works the
-same way. The working-style hook blocks
+same way. Held-out cases in corpus/heldout/ are only parsed here; bench.py
+reports their results. The working-style hook blocks
 nothing, so its case asserts what it prints.
 
     python3 paved-road-core/tests/guards.test.py
@@ -49,6 +50,7 @@ def main() -> int:
     failures = 0
     misses = 0
     cases = corpus_lib.load()
+    heldout = corpus_lib.load("heldout")  # raises on a malformed line
     for case in cases:
         got = corpus_lib.run(case)
         correct = got == case.expected
@@ -78,6 +80,7 @@ def main() -> int:
     print(f"{'PASS' if ok else 'FAIL'}  {'style':8} {'session':7} prints working-style.md on session start")
     total = len(cases) + 1
     print(f"\n{total - failures - misses}/{total} passed, {misses} known misses, {failures} failed")
+    print(f"{len(heldout)} held-out cases parsed; run tools/bench.py for their results")
     return 1 if failures else 0
 
 

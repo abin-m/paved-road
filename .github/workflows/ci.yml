@@ -43,7 +43,20 @@ jobs:
         run: python paved-road-core/tests/guards.test.py
 
       - name: Guard benchmark (report only)
+        if: runner.os != 'Linux'
         run: python tools/bench.py --runs 10
+
+      # bench/results.json is what the README quotes, so it must match the
+      # guards. Checked on one OS: the counts are the same on each.
+      - name: Guard benchmark (results file is current)
+        if: runner.os == 'Linux'
+        run: python tools/bench.py --runs 10 --check bench/results.json
+
+      - name: Harbor tasks score as expected (no Docker, no model)
+        if: runner.os == 'Linux'
+        run: |
+          python bench/harbor/sync.py --check
+          python bench/harbor/selftest.py
 
       - name: Tool tests (no network, no token)
         run: python paved-road-core/tests/tools.test.py
