@@ -3,7 +3,8 @@
 Each guard has a directory, corpus/<guard>/. Each line of its bypass.jsonl
 must be blocked (exit 2), and each line of its benign.jsonl must be allowed
 (exit 0). A file per guard means PRs for different guards never edit the same
-file. A line has these keys:
+file. Held-out cases live in corpus/heldout/<guard>/, in the same format;
+corpus/heldout/README.md says how they are kept untuned. A line has these keys:
 
   label        short name for the report
   bash         a Bash command, or
@@ -18,6 +19,8 @@ file. A line has these keys:
   issue        the GitHub issue that fixes a known miss; required with known_miss
   limit        optional: the guard gets this case wrong by design, and the
                README lists it under what the guards don't stop
+  source       who wrote the case and how; required in heldout/, and
+               "author" when left out of the main corpus
 """
 
 import hashlib
@@ -32,6 +35,7 @@ from dataclasses import dataclass
 TESTS = pathlib.Path(__file__).resolve().parent
 HOOKS = TESTS.parent / "hooks"
 CORPUS = TESTS / "corpus"
+SPLITS = {"dev": CORPUS, "heldout": CORPUS / "heldout"}
 
 GUARDS = {
     "secrets": HOOKS / "secrets-guard.py",
@@ -53,6 +57,11 @@ class Case:
     kind: str
     raw: dict
     where: str
+    split: str = "dev"
+
+    @property
+    def source(self) -> str:
+        return self.raw.get("source", "author")
 
     @property
     def expected(self) -> int:
@@ -72,16 +81,18 @@ class Case:
         return bool(self.raw.get("limit"))
 
 
-def load() -> list:
-    """Every case in the corpus. Raises ValueError on a malformed line."""
+def load(split: str = "dev") -> list:
+    """Every case in one split, "dev" or "heldout". Raises ValueError on a malformed line."""
+    base = SPLITS[split]
     cases = []
     for guard in GUARDS:
         for kind in EXPECTED_EXIT:
-            path = CORPUS / guard / f"{kind}.jsonl"
+            path = base / guard / f"{kind}.jsonl"
+            prefix = "heldout/" if split == "heldout" else ""
             for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
                 if not line.strip():
                     continue
-                where = f"{guard}/{path.name}:{n}"
+                where = f"{prefix}{guard}/{path.name}:{n}"
                 raw = json.loads(line)
                 if not raw.get("label"):
                     raise ValueError(f"{where}: missing label")
@@ -91,7 +102,12 @@ def load() -> list:
                     raise ValueError(f"{where}: a known miss needs the issue that fixes it")
                 if raw.get("known_miss") and raw.get("limit"):
                     raise ValueError(f"{where}: a case is a known miss or a limit, not both")
-                cases.append(Case(guard, kind, raw, where))
+                if split == "heldout":
+                    if not raw.get("source"):
+                        raise ValueError(f"{where}: a held-out case needs a source")
+                    if raw.get("known_miss") or raw.get("limit"):
+                        raise ValueError(f"{where}: a held-out case has no known_miss or limit")
+                cases.append(Case(guard, kind, raw, where, split))
     return cases
 
 
