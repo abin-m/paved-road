@@ -73,3 +73,6 @@
 {"label": "cdk deploy --all, prod stack in a stage", "bash": "cdk deploy --all", "cwd": "fixtures/cdk-stage"}
 {"label": "cdk deploy --all, AWS_PROFILE prod", "bash": "cdk deploy --all", "env": {"AWS_PROFILE": "prod"}}
 {"label": "cdk deploy a stack whose stackName is prod", "bash": "cdk deploy ApiStack", "cwd": "fixtures/cdk-prod"}
+{"label": "switch to a prod context, then delete", "bash": "kubectl config use-context prod-eu && kubectl delete pod api-1"}
+{"label": "kubectl config use-context to prod", "bash": "kubectl config use-context prod-eu"}
+{"label": "set the current context's namespace to prod", "bash": "kubectl config set-context --current --namespace=prod"}

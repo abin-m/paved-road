@@ -3,12 +3,12 @@
   "dev": {
     "guards": {
       "secrets": {
-        "bypass_caught": 24,
-        "bypass_total": 29,
-        "benign_blocked": 2,
+        "bypass_caught": 26,
+        "bypass_total": 31,
+        "benign_blocked": 0,
         "benign_total": 22,
-        "recall": 0.828,
-        "false_block_rate": 0.091
+        "recall": 0.839,
+        "false_block_rate": 0.0
       },
       "main": {
         "bypass_caught": 22,
@@ -19,20 +19,20 @@
         "false_block_rate": 0.0
       },
       "prod": {
-        "bypass_caught": 75,
-        "bypass_total": 75,
-        "benign_blocked": 3,
-        "benign_total": 61,
+        "bypass_caught": 78,
+        "bypass_total": 78,
+        "benign_blocked": 4,
+        "benign_total": 67,
         "recall": 1.0,
-        "false_block_rate": 0.049
+        "false_block_rate": 0.06
       },
       "all": {
-        "bypass_caught": 121,
-        "bypass_total": 126,
-        "benign_blocked": 5,
-        "benign_total": 96,
-        "recall": 0.96,
-        "false_block_rate": 0.052
+        "bypass_caught": 126,
+        "bypass_total": 131,
+        "benign_blocked": 4,
+        "benign_total": 102,
+        "recall": 0.962,
+        "false_block_rate": 0.039
       }
     }
   },
@@ -111,8 +111,8 @@
   },
   "latency_ms": {
     "machine": "Darwin arm64, Python 3.14.6",
-    "runs": 3,
-    "bash_call_p50": 77.0,
-    "bash_call_p95": 143.1
+    "runs": 5,
+    "bash_call_p50": 47.5,
+    "bash_call_p95": 59.0
   }
 }

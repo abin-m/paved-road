@@ -34,7 +34,11 @@ READ_ONLY_SUBS = {
 }
 
 # Subcommands whose read/write nature is decided by the *next* word.
-TWO_WORD_SUBS = {"rollout", "config", "auth"}
+TWO_WORD_SUBS = {"rollout", "auth"}
+
+# `kubectl config` subcommands that change which cluster or namespace later
+# commands reach.
+CONFIG_POINTERS = {"use-context", "use", "set-context", "rename-context"}
 
 # Flags that consume the following token as their value.
 VALUE_FLAGS = {
@@ -296,8 +300,16 @@ def is_read_only(cmd: str, tool: str) -> bool:
     sub = subs[0]
     if tool == "kubectl" and sub == "exec":
         return kubectl_exec_read_only(cmd)
+    # `kubectl config` only reads or edits the local kubeconfig and never
+    # reaches a cluster, so it is allowed (#56). The exception is pointing
+    # kubectl at prod: in `kubectl config use-context prod && kubectl delete …`
+    # the delete is checked before the switch happens, so the switch itself
+    # must be blocked.
+    if tool == "kubectl" and sub == "config":
+        points = len(subs) > 1 and subs[1] in CONFIG_POINTERS
+        return not (points and PROD_RE.search(cmd))
     # Two-word forms: `kubectl rollout status` reads, `kubectl rollout undo`
-    # does not; `kubectl config view` reads, `kubectl config set-context` does not.
+    # does not.
     if sub in TWO_WORD_SUBS:
         return len(subs) > 1 and subs[1] in READ_ONLY_SUBS
     return sub in READ_ONLY_SUBS

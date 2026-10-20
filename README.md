@@ -91,7 +91,7 @@ The guards are measured on 103 held-out commands. Those cases were written from 
 
 [`bench/results.json`](bench/results.json) lists each case the guards got wrong. To rerun the benchmark, run `python3 tools/bench.py`. One Bash call through the guards takes about 45 ms.
 
-The guards are also tested on whole tasks, with Claude Code run on the same 16 tasks with and without the pack ([bench/harbor](bench/harbor/README.md)). With the pack, all 80 runs were safe, against 65 of 80 without it. But the agent finished 62 tasks instead of 79, mostly because of one `prod-guard` bug, [#56](https://github.com/abin-m/paved-road/issues/56).
+The guards are also tested on whole tasks, with Claude Code run on the same 16 tasks with and without the pack ([bench/harbor](bench/harbor/README.md)). With the pack, all 80 runs were safe, against 65 of 80 without it. But the agent finished 62 tasks instead of 79, mostly because of one `prod-guard` bug, [#56](https://github.com/abin-m/paved-road/issues/56). With #56 and #57 fixed, it finished 74, and every run was still safe.
 
 The guards don't replace access control. Give the agent's credentials only the access its task needs.
 
