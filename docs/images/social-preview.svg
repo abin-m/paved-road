@@ -1,31 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">
-  <!-- GitHub social preview. Render: rsvg-convert -w 1280 -h 640 social-preview.svg -o social-preview.png -->
-  <rect width="1280" height="640" fill="#0f172a"/>
-  <rect x="0" y="0" width="1280" height="8" fill="#22c55e"/>
-
-  <text x="80" y="130" font-family="Helvetica, Arial, sans-serif" font-size="76" font-weight="700" fill="#f8fafc">paved-road</text>
-  <text x="80" y="190" font-family="Helvetica, Arial, sans-serif" font-size="34" fill="#94a3b8">Guardrails for Claude Code in platform, DevOps and security work</text>
-
-  <!-- Safe runs -->
-  <text x="80" y="275" font-family="Helvetica, Arial, sans-serif" font-size="26" fill="#94a3b8">Safe runs, out of 80</text>
-  <text x="80" y="320" font-family="Helvetica, Arial, sans-serif" font-size="24" fill="#cbd5e1">without the pack</text>
-  <rect x="340" y="293" width="610" height="36" rx="4" fill="#334155"/>
-  <rect x="340" y="293" width="496" height="36" rx="4" fill="#f97316"/>
-  <text x="970" y="321" font-family="Helvetica, Arial, sans-serif" font-size="30" font-weight="700" fill="#f8fafc">65</text>
-  <text x="80" y="378" font-family="Helvetica, Arial, sans-serif" font-size="24" fill="#cbd5e1">with paved-road</text>
-  <rect x="340" y="351" width="610" height="36" rx="4" fill="#22c55e"/>
-  <text x="970" y="379" font-family="Helvetica, Arial, sans-serif" font-size="30" font-weight="700" fill="#f8fafc">80</text>
-
-  <!-- Tasks done -->
-  <text x="80" y="465" font-family="Helvetica, Arial, sans-serif" font-size="26" fill="#94a3b8">Tasks done, out of 80</text>
-  <text x="80" y="510" font-family="Helvetica, Arial, sans-serif" font-size="24" fill="#cbd5e1">without the pack</text>
-  <rect x="340" y="483" width="610" height="36" rx="4" fill="#334155"/>
-  <rect x="340" y="483" width="602" height="36" rx="4" fill="#38bdf8"/>
-  <text x="970" y="511" font-family="Helvetica, Arial, sans-serif" font-size="30" font-weight="700" fill="#f8fafc">79</text>
-  <text x="80" y="568" font-family="Helvetica, Arial, sans-serif" font-size="24" fill="#cbd5e1">with paved-road</text>
-  <rect x="340" y="541" width="610" height="36" rx="4" fill="#334155"/>
-  <rect x="340" y="541" width="564" height="36" rx="4" fill="#38bdf8"/>
-  <text x="970" y="569" font-family="Helvetica, Arial, sans-serif" font-size="30" font-weight="700" fill="#f8fafc">74</text>
-
-  <text x="80" y="618" font-family="Helvetica, Arial, sans-serif" font-size="22" fill="#64748b">Claude Sonnet 5.5, 16 tasks × 5 runs on Harbor · github.com/abin-m/paved-road</text>
+  <!-- GitHub social preview: the Harbor comparison as a plain table.
+       Render: rsvg-convert -w 1280 -h 640 social-preview.svg -o social-preview.png -->
+  <rect width="1280" height="640" fill="#ffffff"/>
+  <text x="96" y="132" font-family="Helvetica, Arial, sans-serif" font-size="64" font-weight="700" fill="#111" text-anchor="start">paved-road</text>
+  <text x="96" y="184" font-family="Helvetica, Arial, sans-serif" font-size="28" font-weight="400" fill="#444" text-anchor="start">Claude Code on 16 tasks, 5 runs each, with and without the pack</text>
+  <line x1="96" y1="250" x2="1184" y2="250" stroke="#111" stroke-width="2.5"/>
+  <text x="96" y="300" font-family="Helvetica, Arial, sans-serif" font-size="26" font-weight="400" fill="#555" text-anchor="start">out of 80 runs</text>
+  <text x="860" y="300" font-family="Helvetica, Arial, sans-serif" font-size="28" font-weight="700" fill="#111" text-anchor="end">without</text>
+  <text x="1184" y="300" font-family="Helvetica, Arial, sans-serif" font-size="28" font-weight="700" fill="#111" text-anchor="end">with paved-road</text>
+  <line x1="96" y1="328" x2="1184" y2="328" stroke="#111" stroke-width="1.5"/>
+  <text x="96" y="392" font-family="Helvetica, Arial, sans-serif" font-size="32" font-weight="400" fill="#111" text-anchor="start">Run stayed safe</text>
+  <text x="860" y="392" font-family="Helvetica, Arial, sans-serif" font-size="40" font-weight="400" fill="#111" text-anchor="end">65</text>
+  <text x="1184" y="392" font-family="Helvetica, Arial, sans-serif" font-size="40" font-weight="700" fill="#111" text-anchor="end">80</text>
+  <text x="96" y="462" font-family="Helvetica, Arial, sans-serif" font-size="32" font-weight="400" fill="#111" text-anchor="start">Task finished</text>
+  <text x="860" y="462" font-family="Helvetica, Arial, sans-serif" font-size="40" font-weight="700" fill="#111" text-anchor="end">79</text>
+  <text x="1184" y="462" font-family="Helvetica, Arial, sans-serif" font-size="40" font-weight="400" fill="#111" text-anchor="end">74</text>
+  <line x1="96" y1="500" x2="1184" y2="500" stroke="#111" stroke-width="2.5"/>
+  <text x="96" y="590" font-family="Helvetica, Arial, sans-serif" font-size="24" font-weight="400" fill="#666" text-anchor="start">Claude Sonnet 5.5 on Harbor  ·  github.com/abin-m/paved-road</text>
 </svg>
