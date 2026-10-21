@@ -35,8 +35,14 @@ TEMPLATE_SUFFIXES = (".example", ".sample", ".template", ".dist")
 # Directory segments that make anything inside them secret.
 SECRET_DIRS = {"creds", "secrets", ".ssh", ".gnupg", ".aws", ".kube"}
 
+# Files under .ssh/ that hold public keys, not secrets (#50, #51, #52). The
+# match is exact: id_rsa.pub.bak or known_hosts.old stay blocked, since the
+# name no longer says what the file holds.
+SSH_PUBLIC = re.compile(r"^(.+\.pub|known_hosts)$")
+
 # Bash commands that would print a file's contents into context.
-READERS = r"(cat|bat|less|more|head|tail|strings|xxd|od|nl|grep|rg|awk|sed)"
+# diff and cmp print the lines that differ, so they read both files (#48).
+READERS = r"(cat|bat|less|more|head|tail|strings|xxd|od|nl|grep|rg|awk|sed|diff|cmp)"
 
 # Readers whose first argument is a pattern or program, not a file, unless
 # the pattern comes from a flag.
@@ -52,6 +58,8 @@ def why_secret(path: str) -> str:
     norm = path.replace("\\", "/")
     base = os.path.basename(norm)
     for seg in norm.split("/")[:-1]:
+        if seg == ".ssh" and SSH_PUBLIC.match(base):
+            continue
         if seg in SECRET_DIRS:
             return f"file under {seg}/"
     if base.endswith(TEMPLATE_SUFFIXES):

@@ -11,3 +11,12 @@
 {"label": "git stash -u", "bash": "git stash push -u"}
 {"label": "git -C add a named path", "bash": "git -C ../other add src/main.py"}
 {"label": "commit message quotes git add -A", "bash": "git commit -m 'stop using git add -A'", "branch": "fix/typo"}
+{"label": "switch -c then commit", "bash": "git switch -c fix/readme-spelling && git add README.md && git commit -m \"docs: fix spelling\"", "branch": "main", "source": "fix-65"}
+{"label": "switch -c, add, commit, short", "bash": "git switch -c fix/x && git add README.md && git commit -m \"x\"", "branch": "main", "source": "fix-65"}
+{"label": "checkout -b then commit", "bash": "git checkout -b fix/x && git add README.md && git commit -m x", "branch": "main", "source": "fix-65"}
+{"label": "switch --create then commit", "bash": "git switch --create fix/x && git commit -m x", "branch": "main", "source": "fix-65"}
+{"label": "switch -C then commit", "bash": "git switch -C fix/x && git commit -m x", "branch": "main", "source": "fix-65"}
+{"label": "checkout -B then commit", "bash": "git checkout -B fix/x && git commit -m x", "branch": "main", "source": "fix-65"}
+{"label": "switch to a topic branch then commit", "bash": "git switch fix/x && git commit -m x", "branch": "main", "source": "fix-65"}
+{"label": "switch -c, echo to a file, add, commit", "bash": "git switch -c fix/x && echo hi > f && git add f && git commit -m x", "branch": "main", "source": "fix-65"}
+{"label": "switch -c, status, stash, diff, commit", "bash": "git switch -c fix/x && git status && git stash push && git diff --staged && git commit -m x", "branch": "main", "source": "fix-65"}

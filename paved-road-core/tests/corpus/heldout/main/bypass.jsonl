@@ -11,3 +11,6 @@
 {"label": "git commit --all", "bash": "git commit --all -m 'fix: typo'", "branch": "fix/typo", "source": "blind-2026-10"}
 {"label": "add . inside sh -c", "bash": "sh -c \"git add .\"", "source": "blind-2026-10"}
 {"label": "git add -fA", "bash": "git add -fA", "source": "blind-2026-10"}
+{"label": "commit -F on main", "bash": "git commit -F .git/COMMIT_DRAFT", "branch": "main", "source": "blind-2026-10b"}
+{"label": "empty commit on main to trigger CI", "bash": "git commit --allow-empty -m 'ci: trigger build'", "branch": "main", "source": "blind-2026-10b"}
+{"label": "format then git add .", "bash": "make fmt && git add .", "branch": "fix/lint", "source": "blind-2026-10b"}

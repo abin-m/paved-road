@@ -79,3 +79,32 @@
 {"label": "which helm, then helm upgrade on a prod context", "bash": "which helm && helm upgrade api ./chart", "kubeconfig": "fixtures/prod-context.yaml"}
 {"label": "command without -v runs helm on a prod context", "bash": "command helm upgrade api ./chart", "kubeconfig": "fixtures/prod-context.yaml"}
 {"label": "helm upgrade through $(which helm) on a prod context", "bash": "$(which helm) upgrade api ./chart", "kubeconfig": "fixtures/prod-context.yaml"}
+{"label": "ansible ad-hoc reboot in production", "bash": "ansible all -i production -m shell -a 'reboot'", "source": "blind-2026-10"}
+{"label": "gcloud delete instance in prod project", "bash": "gcloud compute instances delete vm-1 --project=acme-prod", "source": "blind-2026-10"}
+{"label": "ansible ad-hoc default command module in production", "bash": "ansible webservers -i inventories/production -a 'systemctl restart nginx'", "source": "fix-53"}
+{"label": "ansible ad-hoc -mshell cluster in production", "bash": "ansible all -i production -mshell -a 'reboot'", "source": "fix-53"}
+{"label": "ansible ad-hoc --module-name=copy in production", "bash": "ansible all -i production --module-name=copy -a 'src=a dest=/etc/a'", "source": "fix-53"}
+{"label": "ansible ad-hoc ping then shell in production", "bash": "ansible all -i production -m ping && ansible all -i production -m shell -a reboot", "source": "fix-53"}
+{"label": "gcloud delete instance, --project space form", "bash": "gcloud compute instances delete vm-1 --project acme-prod", "source": "fix-54"}
+{"label": "gcloud delete instance, global --project first", "bash": "gcloud --project=acme-prod compute instances delete vm-1", "source": "fix-54"}
+{"label": "gcloud compute ssh in prod project", "bash": "gcloud compute ssh vm-1 --project acme-prod", "source": "fix-54"}
+{"label": "gcloud sql instances patch in prod project", "bash": "gcloud sql instances patch db-1 --tier=db-n1-standard-2 --project acme-prod", "source": "fix-54"}
+{"label": "gcloud add-iam-policy-binding in prod project", "bash": "gcloud projects add-iam-policy-binding acme-prod --member=user:a@x.com --role=roles/owner", "source": "fix-54"}
+{"label": "gcloud beta container clusters resize in prod", "bash": "gcloud beta container clusters resize prod-gke --num-nodes 0", "source": "fix-54"}
+{"label": "ansible-playbook --check-mode-off lookalike, production", "bash": "ansible-playbook -i production site.yml --check-mode-off", "source": "fix-55"}
+{"label": "ansible-playbook --check inside extra vars, production", "bash": "ansible-playbook -i production site.yml -e 'x=--check'", "source": "fix-55"}
+{"label": "ansible-playbook --check then real run, production", "bash": "ansible-playbook -i production site.yml --check && ansible-playbook -i production site.yml", "source": "fix-55"}
+{"label": "ansible-playbook --syntax-check then real run, production", "bash": "ansible-playbook -i production site.yml --syntax-check; ansible-playbook -i production site.yml -v", "source": "fix-55"}
+{"label": "sudo ansible ad-hoc reboot in production", "bash": "sudo ansible all -i production -m shell -a reboot", "source": "fix-53"}
+{"label": "sudo -E ansible ad-hoc in production", "bash": "sudo -E ansible all -i production -a reboot", "source": "fix-53"}
+{"label": "sudo -u deploy ansible ad-hoc in production", "bash": "sudo -u deploy ansible all -i production -a reboot", "source": "fix-53"}
+{"label": "/usr/bin/ansible ad-hoc in production", "bash": "/usr/bin/ansible all -i production -a reboot", "source": "fix-53"}
+{"label": "env prefix ansible ad-hoc in production", "bash": "ANSIBLE_FORCE_COLOR=1 ansible all -i production -a reboot", "source": "fix-53"}
+{"label": "cd then ansible ad-hoc in production", "bash": "cd ops && ansible all -i production -a reboot", "source": "fix-53"}
+{"label": "env ansible ad-hoc in production", "bash": "env ansible all -i production -a reboot", "source": "fix-53"}
+{"label": "nohup ansible ad-hoc in production", "bash": "nohup ansible all -i production -a reboot", "source": "fix-53"}
+{"label": "time ansible ad-hoc in production", "bash": "time ansible all -i production -a reboot", "source": "fix-53"}
+{"label": "sudo -E env nohup ansible ad-hoc in production", "bash": "sudo -E env X=1 nohup ansible all -i production -a reboot", "source": "fix-53"}
+{"label": "timeout 60 ansible ad-hoc in production", "bash": "timeout 60 ansible all -i production -a reboot", "source": "fix-53"}
+{"label": "xargs runs ansible against production", "bash": "xargs ansible all -i production -a reboot", "source": "fix-53"}
+{"label": "watch runs ansible against production", "bash": "watch ansible all -i production -a reboot", "source": "fix-53"}

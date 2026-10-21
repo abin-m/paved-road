@@ -101,6 +101,32 @@ CDK_VALUE_OPTS = {"--profile", "-a", "--app", "-o", "--output", "-c", "--context
                   "-t", "--tags", "-m", "--method", "--change-set-name", "--concurrency",
                   "--asset-parallelism", "-E", "--build-exclude", "-p", "--plugin"}
 
+# Ad-hoc ansible modules that only read.
+ANSIBLE_READ_MODULES = {"ping", "setup", "ansible.builtin.ping", "ansible.builtin.setup"}
+
+# Programs that run the next word as a program, each with its options that
+# take a value. `timeout` also takes a duration before the program.
+WRAPPERS = {
+    "env": {"-u", "--unset", "-C", "--chdir", "-S", "--split-string"},
+    "nice": {"-n", "--adjustment"},
+    "timeout": {"-s", "--signal", "-k", "--kill-after"},
+    "sudo": {"-u", "--user", "-g", "--group", "-h", "--host", "-p", "--prompt",
+             "-C", "--close-from", "-D", "--chdir", "-r", "--role", "-t", "--type",
+             "-U", "--other-user"},
+    "doas": {"-u", "-C"},
+    "nohup": set(),
+    "time": {"-o", "--output", "-f", "--format"},
+    "command": set(),
+    "exec": {"-a"},
+}
+
+# gcloud verbs that write. Group words such as `compute instances` can come
+# first, so the verb can be any word after the first group (#54).
+GCLOUD_WRITES = (r"delete|undelete|create|update|deploy|destroy|ssh|scp|connect|start|stop|"
+                 r"reset|resize|suspend|resume|restart|rollback|patch|upgrade|replace|import|"
+                 r"restore|submit|call|publish|enable|disable|failover|set-[\w-]+|"
+                 r"(add|remove|attach|detach|promote)(-[\w-]+)?")
+
 # (regex over the command, human label)
 MUTATORS = [
     (r"\bkubectl\b", "kubectl"),
@@ -108,11 +134,16 @@ MUTATORS = [
     # Global options such as -chdir=dir can come before the subcommand.
     (r"\bterraform\s+(-\S+\s+)*(apply|destroy|import|taint|state\s+(rm|mv|push))\b", "terraform"),
     (r"\bansible-playbook\b", "ansible-playbook"),
+    # Ad-hoc ansible, but not ansible-playbook or ansible-inventory (#53).
+    # ansible_read_only() lets it through when ansible is not the program.
+    (r"\bansible(?=\s|$)", "ansible"),
     (r"\bssh\b", "ssh"),
     (r"\b(scp|rsync)\b", "file transfer"),
     # Every aws call; is_read_only() lets the reads through.
     (r"\baws\s", "aws cli"),
-    (r"\bgcloud\s+\w+\s+(delete|create|update|deploy)", "gcloud"),
+    # Global flags, then a group word, then any words before the verb. The
+    # verb must stand alone, so `vm-delete` is not `delete`.
+    (rf"\bgcloud\s+(-\S+\s+)*[^-\s]\S*(\s+\S+)*?\s+({GCLOUD_WRITES})(?=\s|$)", "gcloud"),
     # For az, pulumi and cdk the verb can follow command groups and global
     # options (`az --subscription x deployment group create`), so any words may
     # come first. The verb must stand alone, so `update-svc` is not `update`.
@@ -307,8 +338,68 @@ def aws_read_only(cmd: str) -> bool:
     return op.startswith(AWS_READ_PREFIXES)
 
 
+def _program(cmd: str) -> str:
+    """The program a command runs, past VAR=value and wrappers such as sudo or env."""
+    words = _words(cmd) or cmd.split()
+    i = 0
+    while i < len(words):
+        word = words[i]
+        if re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", word):
+            i += 1
+            continue
+        prog = os.path.basename(word)
+        if prog not in WRAPPERS:
+            return prog
+        i += 1
+        if prog == "command" and i < len(words) and words[i] in ("-v", "-V"):
+            return prog  # a lookup, not a run
+        while i < len(words) and words[i].startswith("-"):
+            i += 2 if words[i] in WRAPPERS[prog] else 1
+        if prog == "timeout":
+            i += 1  # the duration
+    return ""
+
+
+# Programs that only read or print text. A command whose program is one of
+# these mentions ansible without running it.
+TEXT_TOOLS = {"grep", "egrep", "rg", "cat", "less", "more", "head", "tail", "echo",
+              "printf", "git", "find", "ls", "awk", "wc", "diff", "man", "which"}
+
+
+def ansible_read_only(cmd: str, tool: str) -> bool:
+    """True for an ansible run in check mode, or an ad-hoc read-only module.
+
+    `--check` or `-C` is a dry run, like `terraform plan` (#55). Only the
+    exact flags count, so a lookalike such as `--check-mode-off` does not.
+    A task marked `check_mode: false` still runs under --check; that lives
+    in the playbook, which the guard does not read.
+    """
+    # `grep ansible production` names ansible but does not run it (#53). Only
+    # a known text tool counts: a wrapper the guard doesn't know, such as
+    # xargs or watch, may still run ansible, so it stays blocked.
+    if tool == "ansible" and _program(cmd) in TEXT_TOOLS:
+        return True
+    words = _after(_words(cmd), tool)
+    if "--check" in words or "-C" in words:
+        return True
+    if tool != "ansible":
+        return False
+    # Ad-hoc ansible runs `command` when no module is named (#53).
+    module = "command"
+    for n, w in enumerate(words):
+        if w in ("-m", "--module-name") and n + 1 < len(words):
+            module = words[n + 1]
+        elif w.startswith("--module-name="):
+            module = w.split("=", 1)[1]
+        elif w.startswith("-m") and len(w) > 2 and not w.startswith("--"):
+            module = w[2:]
+    return module in ANSIBLE_READ_MODULES
+
+
 def is_read_only(cmd: str, tool: str) -> bool:
-    """True when a kubectl/helm/docker/ssh/aws invocation only reads."""
+    """True when a kubectl/helm/docker/ssh/aws/ansible invocation only reads."""
+    if tool in ("ansible", "ansible-playbook"):
+        return ansible_read_only(cmd, tool)
     if tool == "ssh":
         return ssh_read_only(cmd)
     if tool == "aws cli":
