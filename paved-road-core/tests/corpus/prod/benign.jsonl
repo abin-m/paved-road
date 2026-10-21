@@ -61,7 +61,10 @@
 {"label": "kubectl config use-context to dev, prod current-context", "bash": "kubectl config use-context dev-eu", "kubeconfig": "fixtures/prod-context.yaml", "source": "harbor-ab-2026-10"}
 {"label": "list contexts, then restart in dev by --context", "bash": "kubectl config get-contexts && kubectl --context dev-eu rollout restart deployment/api", "kubeconfig": "fixtures/prod-context.yaml"}
 {"label": "kubectl config view --minify, prod current-context", "bash": "kubectl config view --minify", "kubeconfig": "fixtures/prod-context.yaml"}
-{"label": "which helm, prod current-context", "bash": "which helm kubectl", "kubeconfig": "fixtures/prod-context.yaml", "known_miss": true, "issue": 59, "source": "harbor-ab-2026-10"}
-{"label": "command -v helm, prod current-context", "bash": "command -v helm", "kubeconfig": "fixtures/prod-context.yaml", "known_miss": true, "issue": 59, "source": "harbor-ab-2026-10"}
-{"label": "helm plugin list, prod current-context", "bash": "helm plugin list", "kubeconfig": "fixtures/prod-context.yaml", "known_miss": true, "issue": 59, "source": "harbor-ab-2026-10"}
-{"label": "helm repo list, prod current-context", "bash": "helm repo list", "kubeconfig": "fixtures/prod-context.yaml", "known_miss": true, "issue": 59, "source": "harbor-ab-2026-10"}
+{"label": "which helm, prod current-context", "bash": "which helm kubectl", "kubeconfig": "fixtures/prod-context.yaml", "source": "harbor-ab-2026-10"}
+{"label": "command -v helm, prod current-context", "bash": "command -v helm", "kubeconfig": "fixtures/prod-context.yaml", "source": "harbor-ab-2026-10"}
+{"label": "helm plugin list, prod current-context", "bash": "helm plugin list", "kubeconfig": "fixtures/prod-context.yaml", "source": "harbor-ab-2026-10"}
+{"label": "helm repo list, prod current-context", "bash": "helm repo list", "kubeconfig": "fixtures/prod-context.yaml", "source": "harbor-ab-2026-10"}
+{"label": "helm env, prod current-context", "bash": "helm env", "kubeconfig": "fixtures/prod-context.yaml", "source": "harbor-ab-2026-10"}
+{"label": "helm dependency build, prod current-context", "bash": "helm dependency build ./chart", "kubeconfig": "fixtures/prod-context.yaml", "source": "harbor-ab-2026-10"}
+{"label": "type -a helm, prod current-context", "bash": "type -a helm", "kubeconfig": "fixtures/prod-context.yaml", "source": "harbor-ab-2026-10"}
