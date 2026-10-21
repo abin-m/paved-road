@@ -23,7 +23,10 @@ KUBECTL_READ = {"get", "describe", "logs", "top", "explain", "version", "api-res
                 "api-versions", "diff", "auth", "cluster-info", "events", "wait"}
 KUBECTL_ROLLOUT_READ = {"status", "history"}
 HELM_READ = {"list", "ls", "history", "status", "get", "template", "show", "inspect",
-             "version", "lint", "repo", "search", "dependency", "env", "plugin", "verify"}
+             "version", "lint", "repo", "search", "dependency", "env", "plugin", "verify",
+             "diff", "completion", "create", "package", "pull"}
+# A help flag prints usage and reaches nothing, whatever the verb.
+HELP_FLAGS = {"--help", "-h", "-help"}
 HELM_WRITE = {"install", "upgrade", "rollback", "uninstall", "delete", "del", "un"}
 TF_READ = {"init", "plan", "validate", "output", "fmt", "show", "providers", "version",
            "graph", "console", "get", "workspace", "login", "logout"}
@@ -446,6 +449,9 @@ def main() -> int:
     if tool not in handlers:
         print("install as kubectl, helm or terraform", file=sys.stderr)
         return 2
+    if HELP_FLAGS & set(sys.argv[1:]):
+        print(f"Usage: {tool} [command] [flags]")
+        return 0
     return handlers[tool](sys.argv[1:])
 
 
