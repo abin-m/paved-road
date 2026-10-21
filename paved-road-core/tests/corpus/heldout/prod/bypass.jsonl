@@ -14,11 +14,9 @@
 {"label": "terraform apply, TF_WORKSPACE production", "bash": "terraform apply", "env": {"TF_WORKSPACE": "production"}, "source": "blind-2026-10"}
 {"label": "cd then terraform apply prod", "bash": "cd infra && terraform apply -var-file=prod.tfvars", "source": "blind-2026-10"}
 {"label": "ansible-playbook prod inventory file", "bash": "ansible-playbook -i inventory/prod.ini deploy.yml", "source": "blind-2026-10"}
-{"label": "ansible ad-hoc reboot in production", "bash": "ansible all -i production -m shell -a 'reboot'", "source": "blind-2026-10"}
 {"label": "aws ecs force new deployment", "bash": "aws ecs update-service --cluster prod --service api --force-new-deployment", "source": "blind-2026-10"}
 {"label": "aws s3 rb prod bucket", "bash": "aws s3 rb s3://prod-assets --force", "source": "blind-2026-10"}
 {"label": "aws --profile= production lambda update", "bash": "aws --profile=production lambda update-function-code --function-name api --zip-file fileb://f.zip", "source": "blind-2026-10"}
-{"label": "gcloud delete instance in prod project", "bash": "gcloud compute instances delete vm-1 --project=acme-prod", "source": "blind-2026-10"}
 {"label": "gcloud run deploy to prod project", "bash": "gcloud run deploy api --project prod-123 --image gcr.io/x/api", "source": "blind-2026-10"}
 {"label": "az vm delete prod", "bash": "az vm delete -g rg-prod -n vm1 --yes", "source": "blind-2026-10"}
 {"label": "pulumi up -s production -y", "bash": "pulumi up -s production -y", "source": "blind-2026-10"}

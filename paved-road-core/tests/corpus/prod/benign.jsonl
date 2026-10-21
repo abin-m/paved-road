@@ -68,3 +68,20 @@
 {"label": "helm env, prod current-context", "bash": "helm env", "kubeconfig": "fixtures/prod-context.yaml", "source": "harbor-ab-2026-10"}
 {"label": "helm dependency build, prod current-context", "bash": "helm dependency build ./chart", "kubeconfig": "fixtures/prod-context.yaml", "source": "harbor-ab-2026-10"}
 {"label": "type -a helm, prod current-context", "bash": "type -a helm", "kubeconfig": "fixtures/prod-context.yaml", "source": "harbor-ab-2026-10"}
+{"label": "ansible-playbook --check production", "bash": "ansible-playbook -i inventories/production site.yml --check", "source": "blind-2026-10"}
+{"label": "ansible ad-hoc ping in production", "bash": "ansible prod-hosts -i inventories/production -m ping", "source": "fix-53"}
+{"label": "ansible ad-hoc setup in production", "bash": "ansible all -i production -m ansible.builtin.setup -a 'filter=ansible_os_family'", "source": "fix-53"}
+{"label": "ansible ad-hoc shell in check mode, production", "bash": "ansible all -i production -m shell -a reboot --check", "source": "fix-53"}
+{"label": "ansible-inventory list production", "bash": "ansible-inventory -i inventories/production --list", "source": "fix-53"}
+{"label": "gcloud compute instances list prod project", "bash": "gcloud compute instances list --project acme-prod", "source": "fix-54"}
+{"label": "gcloud compute instances describe, --project=", "bash": "gcloud compute instances describe vm-1 --project=acme-prod", "source": "fix-54"}
+{"label": "gcloud describe an instance named like a verb", "bash": "gcloud compute instances describe vm-delete --project acme-prod", "source": "fix-54"}
+{"label": "gcloud run services list prod project", "bash": "gcloud run services list --project prod-123", "source": "fix-54"}
+{"label": "gcloud deploy releases list prod project", "bash": "gcloud deploy releases list --delivery-pipeline api --project acme-prod", "source": "fix-54"}
+{"label": "gcloud logging read prod project", "bash": "gcloud logging read 'severity>=ERROR' --project acme-prod --limit 50", "source": "fix-54"}
+{"label": "ansible-playbook --check --diff production", "bash": "ansible-playbook -i inventories/production site.yml --check --diff", "source": "fix-55"}
+{"label": "ansible-playbook -C production", "bash": "ansible-playbook -i production site.yml -C", "source": "fix-55"}
+{"label": "grep for ansible in production inventory", "bash": "grep -rn ansible inventories/production", "source": "fix-53"}
+{"label": "cat a doc named ansible production", "bash": "cat docs/ansible production.md", "source": "fix-53"}
+{"label": "echo mentioning ansible and production", "bash": "echo ansible deploy to production", "source": "fix-53"}
+{"label": "git log --grep ansible on production inventory", "bash": "git log --grep ansible -- inventories/production", "source": "fix-53"}
