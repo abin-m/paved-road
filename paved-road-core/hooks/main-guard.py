@@ -30,6 +30,16 @@ GIT_VALUE_OPTS = {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--exec
 # commit options that take the next word as their value, which may start with "-".
 COMMIT_VALUE_OPTS = {"-m", "--message", "-F", "--file", "-C", "-c", "-t", "--template",
                      "--author", "--date", "--fixup", "--squash", "--cleanup"}
+# switch and checkout options that create the branch named by the next word.
+CREATE_OPTS = {"-c", "-C", "--create", "--force-create", "-b", "-B"}
+# Commands that change directory, so a later git command may be in another repo.
+CD_PROGRAMS = {"cd", "pushd", "popd"}
+# git subcommands that never move HEAD to another branch. `git stash` counts
+# only as `stash` or `stash push`.
+KEEPS_HEAD = {"add", "rm", "mv", "restore", "status", "diff", "log", "show", "commit", "stash"}
+# Programs that can't run git, so HEAD stays where a chain's switch left it.
+NO_GIT_PROGRAMS = {"echo", "printf", "cat", "touch", "mkdir", "cp", "mv", "rm", "sed",
+                   "tee", "true", "test", "[", "ls", "pwd"}
 
 
 def current_branch(cwd: str) -> str:
@@ -47,10 +57,13 @@ def current_branch(cwd: str) -> str:
 
 
 def git_commands(cmd: str) -> list:
-    """(directory, subcommand, args) for each git command in a shell command.
+    """(directory, subcommand, args, chained) for each git command in a shell command.
 
     The directory is relative to the session's cwd and follows `git -C`.
     Commands inside backticks, `$(...)`, `sh -c '...'` and `eval` count too.
+    chained is True when the command runs only if the git command before it
+    succeeded: every operator between them is `&&`, and every other command
+    between them is in NO_GIT_PROGRAMS.
     """
     # A backtick runs its contents even inside double quotes, so treat it as
     # a command boundary.
@@ -62,27 +75,37 @@ def git_commands(cmd: str) -> list:
     except ValueError:
         return []  # unbalanced quotes: the shell will refuse the command
 
-    commands, words = [], []
+    commands, words, ops = [], [], []
     for token in tokens + [";"]:
         if token and set(token) <= set(";&|()"):
             if words:
-                commands.append(words)
+                commands.append((ops, words))
+                ops = []
             words = []
+            ops.append(token)
         else:
             words.append(token)
 
-    found = []
-    for words in commands:
+    found, chained = [], True
+    for ops, words in commands:
+        chained = chained and all(op == "&&" for op in ops)
         program = os.path.basename(words[0])
+        nested = None
         if program in SHELLS and "-c" in words[:-1]:
-            found += git_commands(words[words.index("-c") + 1])
-            continue
-        if program == "eval":
-            found += git_commands(" ".join(words[1:]))
+            nested = git_commands(words[words.index("-c") + 1])
+        elif program == "eval":
+            nested = git_commands(" ".join(words[1:]))
+        if nested is not None or program in CD_PROGRAMS:
+            # Don't follow a branch switch into or out of a nested command,
+            # or across a cd.
+            found += [(d, s, a, False) for d, s, a, _ in nested or []]
+            chained = False
             continue
         try:
             i = next(n for n, w in enumerate(words) if os.path.basename(w) == "git") + 1
         except StopIteration:
+            # make, a script or npm can run `git checkout main` itself.
+            chained = chained and program in NO_GIT_PROGRAMS
             continue
         directory = ""
         while i < len(words) and words[i].startswith("-"):
@@ -90,7 +113,8 @@ def git_commands(cmd: str) -> list:
                 directory = os.path.join(directory, words[i + 1])
             i += 2 if words[i] in GIT_VALUE_OPTS else 1
         if i < len(words):
-            found.append((directory, words[i], words[i + 1:]))
+            found.append((directory, words[i], words[i + 1:], chained))
+            chained = True
     return found
 
 
@@ -124,6 +148,46 @@ def commit_all(args: list) -> bool:
     return False
 
 
+def is_branch(name: str, cwd: str) -> bool:
+    """True when name is a local branch in the repo at cwd."""
+    try:
+        out = subprocess.run(
+            ["git", "rev-parse", "--verify", "--quiet", "refs/heads/" + name],
+            cwd=cwd or None,
+            capture_output=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return out.returncode == 0
+
+
+def switch_target(sub: str, args: list, cwd: str) -> str:
+    """The branch `git switch` / `git checkout` args move HEAD to, or "" if unclear."""
+    names = []
+    i = 0
+    while i < len(args):
+        arg = args[i]
+        if arg in CREATE_OPTS and not (sub == "switch" and arg in ("-b", "-B")):
+            return args[i + 1] if i + 1 < len(args) else ""
+        if arg.startswith(("--create=", "--force-create=")):
+            return arg.split("=", 1)[1]
+        if arg in ("--", "-", "-t") or arg.startswith(("--detach", "--orphan", "-d", "--track")):
+            # A path checkout, the previous branch, no branch, or a branch
+            # named after a remote one.
+            return ""
+        if not arg.startswith("-"):
+            names.append(arg)
+        i += 1
+    if len(names) != 1:
+        return ""
+    # `git checkout README.md` restores a file and leaves HEAD where it is.
+    # `git switch` only takes a branch, and fails otherwise.
+    if sub == "checkout" and not is_branch(names[0], cwd):
+        return ""
+    return names[0]
+
+
 def check(event: dict) -> str:
     """The message to block this tool call with, or "" to allow it."""
     if event.get("tool_name") != "Bash":
@@ -132,7 +196,18 @@ def check(event: dict) -> str:
     cmd = (event.get("tool_input") or {}).get("command", "") or ""
     cwd = event.get("cwd") or os.getcwd()
 
-    for directory, sub, args in git_commands(cmd):
+    # The branch an earlier step of the chain switched to, as (directory, name).
+    # HEAD is read before the command runs, so without this
+    # `git switch -c fix/x && git commit` was blocked as a commit on main (#65).
+    # Only a switch joined to the commit by `&&` counts: after `;` or `||` the
+    # commit can run when the switch failed, and then it lands on main. Any
+    # git command in between that might move HEAD (symbolic-ref, update-ref,
+    # rebase, an alias) drops back to reading HEAD.
+    switched = None
+    for directory, sub, args, chained in git_commands(cmd):
+        keeps_head = sub in KEEPS_HEAD and (sub != "stash" or args[:1] in ([], ["push"]))
+        if not chained or not (keeps_head or sub in ("switch", "checkout")):
+            switched = None
         if sub == "add" and bulk_add(args):
             return (
                 "BLOCKED (bulk staging): `git add -A` / `-u` / `.` sweeps unrelated "
@@ -143,8 +218,14 @@ def check(event: dict) -> str:
                 "BLOCKED (implicit add): `git commit -a` commits every tracked change. "
                 "Stage explicit paths, then commit without -a."
             )
+        if sub in ("switch", "checkout"):
+            target = switch_target(sub, args, os.path.join(cwd, directory))
+            switched = (os.path.normpath(directory), target) if target else None
         if sub == "commit":
-            branch = current_branch(os.path.join(cwd, directory))
+            if switched and switched[0] == os.path.normpath(directory):
+                branch = switched[1]
+            else:
+                branch = current_branch(os.path.join(cwd, directory))
             if branch in DEFAULT_BRANCHES:
                 return (
                     f"BLOCKED (commit on {branch}): create a topic branch first — "

@@ -20,3 +20,18 @@
 {"label": "add . inside eval", "bash": "eval \"git add .\""}
 {"label": "add -A inside backticks", "bash": "echo `git add -A`"}
 {"label": "add -A inside $( )", "bash": "echo $(git add -A)"}
+{"label": "switch -c, back to main, commit", "bash": "git switch -c fix/x && git switch main && git commit -m x", "branch": "main", "source": "fix-65"}
+{"label": "switch -c, checkout -B master, commit", "bash": "git switch -c fix/x && git checkout -B master && git commit -m x", "branch": "main", "source": "fix-65"}
+{"label": "commit before switch -c", "bash": "git commit -m x && git switch -c fix/x", "branch": "main", "source": "fix-65"}
+{"label": "commit runs if switch -c fails", "bash": "git switch -c fix/x || git commit -m x", "branch": "main", "source": "fix-65"}
+{"label": "commit after switch -c and ;", "bash": "git switch -c fix/x; git commit -m x", "branch": "main", "source": "fix-65"}
+{"label": "checkout a file then commit", "bash": "git checkout README.md && git commit -m x", "branch": "main", "source": "fix-65"}
+{"label": "switch -c in another repo then commit", "bash": "git -C ../other switch -c fix/x && git commit -m x", "branch": "main", "source": "fix-65"}
+{"label": "switch -c, cd, commit", "bash": "git switch -c fix/x && cd ../other && git commit -m x", "branch": "main", "source": "fix-65"}
+{"label": "switch -c then add -A", "bash": "git switch -c fix/x; git add -A", "branch": "main", "source": "fix-65"}
+{"label": "switch -c then add . and commit", "bash": "git switch -c fix/x && git add . && git commit -m x", "branch": "main", "source": "fix-65"}
+{"label": "switch -c then commit -a", "bash": "git switch -c fix/x && git commit -am x", "branch": "main", "source": "fix-65"}
+{"label": "switch -c, symbolic-ref to main, commit", "bash": "git switch -c fix/x && git symbolic-ref HEAD refs/heads/main && git commit -m x", "branch": "main", "source": "fix-65"}
+{"label": "switch -c, update-ref HEAD to main, commit", "bash": "git switch -c fix/x && git update-ref HEAD refs/heads/main && git commit -m x", "branch": "main", "source": "fix-65"}
+{"label": "switch -c, make release, commit", "bash": "git switch -c fix/x && make release && git commit -m x", "branch": "main", "source": "fix-65"}
+{"label": "switch -c, run a script, commit", "bash": "git switch -c fix/x && ./prep.sh && git commit -m x", "branch": "main", "source": "fix-65"}
