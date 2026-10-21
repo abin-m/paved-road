@@ -4,7 +4,9 @@
 [![Release](https://img.shields.io/github/v/release/abin-m/paved-road)](https://github.com/abin-m/paved-road/releases)
 [![Licence: MIT](https://img.shields.io/badge/licence-MIT-blue)](LICENSE)
 
-A Claude Code plugin pack for platform, DevOps and security work. Install it once, and every repo you open gets the same skills, GitHub scripts and safety hooks.
+A Claude Code plugin pack for platform, DevOps and security work: safety hooks, skills and GitHub scripts that apply in every repo you open. In 80 benchmark runs, plain Claude Code committed to `main` or printed a secret file 15 times. With paved-road installed it did neither, and still finished 74 of the 80 tasks.
+
+[How it was measured](bench/harbor/README.md) · [What the guards stop, and what they don't](#what-the-guards-stop-and-what-they-dont)
 
 ## Who this is for
 
