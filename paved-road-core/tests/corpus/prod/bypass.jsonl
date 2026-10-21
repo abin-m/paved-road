@@ -76,3 +76,6 @@
 {"label": "switch to a prod context, then delete", "bash": "kubectl config use-context prod-eu && kubectl delete pod api-1"}
 {"label": "kubectl config use-context to prod", "bash": "kubectl config use-context prod-eu"}
 {"label": "set the current context's namespace to prod", "bash": "kubectl config set-context --current --namespace=prod"}
+{"label": "which helm, then helm upgrade on a prod context", "bash": "which helm && helm upgrade api ./chart", "kubeconfig": "fixtures/prod-context.yaml"}
+{"label": "command without -v runs helm on a prod context", "bash": "command helm upgrade api ./chart", "kubeconfig": "fixtures/prod-context.yaml"}
+{"label": "helm upgrade through $(which helm) on a prod context", "bash": "$(which helm) upgrade api ./chart", "kubeconfig": "fixtures/prod-context.yaml"}

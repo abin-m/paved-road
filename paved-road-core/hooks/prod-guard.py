@@ -33,6 +33,14 @@ READ_ONLY_SUBS = {
     "values", "template", "lint", "search", "test",
 }
 
+# helm subcommands that only touch local files and config, never a cluster:
+# plugins, repos, chart downloads and scaffolding (#59).
+HELM_LOCAL_SUBS = {"plugin", "env", "repo", "completion", "dependency", "dep",
+                   "package", "pull", "create", "registry"}
+
+# Programs that look a command up without running it: `which helm`.
+LOOKUPS = {"which", "whereis", "type", "hash"}
+
 # Subcommands whose read/write nature is decided by the *next* word.
 TWO_WORD_SUBS = {"rollout", "auth"}
 
@@ -144,6 +152,19 @@ def _subcommands(cmd: str, tool: str) -> list[str]:
             bare.append(tok)
         i += 1
     return bare
+
+
+def is_lookup(part: str) -> bool:
+    """True when this part of a chain only looks a program up, as in `which helm`.
+
+    `command -v helm` is a lookup. `command helm upgrade …` runs helm, so it isn't.
+    """
+    words = [w for w in _words(part) if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", w)]
+    if not words:
+        return False
+    if words[0] in LOOKUPS:
+        return True
+    return words[0] == "command" and len(words) > 1 and words[1] in ("-v", "-V")
 
 
 def split_chain(cmd: str) -> list:
@@ -300,6 +321,8 @@ def is_read_only(cmd: str, tool: str) -> bool:
     sub = subs[0]
     if tool == "kubectl" and sub == "exec":
         return kubectl_exec_read_only(cmd)
+    if tool == "helm" and sub in HELM_LOCAL_SUBS:
+        return True
     # `kubectl config` only reads or edits the local kubeconfig and never
     # reaches a cluster, so it is allowed (#56). The exception is pointing
     # kubectl at prod: in `kubectl config use-context prod && kubectl delete …`
@@ -496,6 +519,8 @@ def check(event: dict) -> str:
     # Judge each part of a chain on its own, so a read-only first part
     # cannot clear a mutating second part.
     for part in split_chain(cmd):
+        if is_lookup(part):
+            continue
         for pattern, label in MUTATORS:
             if not re.search(pattern, part) or is_read_only(part, label):
                 continue
