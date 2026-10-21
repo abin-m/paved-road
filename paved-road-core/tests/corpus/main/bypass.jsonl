@@ -35,3 +35,4 @@
 {"label": "switch -c, update-ref HEAD to main, commit", "bash": "git switch -c fix/x && git update-ref HEAD refs/heads/main && git commit -m x", "branch": "main", "source": "fix-65"}
 {"label": "switch -c, make release, commit", "bash": "git switch -c fix/x && make release && git commit -m x", "branch": "main", "source": "fix-65"}
 {"label": "switch -c, run a script, commit", "bash": "git switch -c fix/x && ./prep.sh && git commit -m x", "branch": "main", "source": "fix-65"}
+{"label": "sed's e flag between the switch and the commit", "bash": "git switch -c fix/x && sed -n 's/x/git checkout main/e' f && git commit -m x", "branch": "main", "source": "fix-65"}

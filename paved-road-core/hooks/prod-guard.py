@@ -360,6 +360,12 @@ def _program(cmd: str) -> str:
     return ""
 
 
+# Programs that only read or print text. A command whose program is one of
+# these mentions ansible without running it.
+TEXT_TOOLS = {"grep", "egrep", "rg", "cat", "less", "more", "head", "tail", "echo",
+              "printf", "git", "find", "ls", "awk", "wc", "diff", "man", "which"}
+
+
 def ansible_read_only(cmd: str, tool: str) -> bool:
     """True for an ansible run in check mode, or an ad-hoc read-only module.
 
@@ -368,8 +374,10 @@ def ansible_read_only(cmd: str, tool: str) -> bool:
     A task marked `check_mode: false` still runs under --check; that lives
     in the playbook, which the guard does not read.
     """
-    # `grep ansible production` names ansible but does not run it (#53).
-    if tool == "ansible" and _program(cmd) != "ansible":
+    # `grep ansible production` names ansible but does not run it (#53). Only
+    # a known text tool counts: a wrapper the guard doesn't know, such as
+    # xargs or watch, may still run ansible, so it stays blocked.
+    if tool == "ansible" and _program(cmd) in TEXT_TOOLS:
         return True
     words = _after(_words(cmd), tool)
     if "--check" in words or "-C" in words:

@@ -82,16 +82,18 @@ This is the guards' real output for three blocked calls and one allowed call:
 
 The guards stop the usual ways an agent makes four mistakes: reading a secret file, staging the whole tree, committing on a default branch and changing production.
 
-The guards are measured on 103 held-out commands. Those cases were written from this README, without reading the guard code, and the guards are never tuned against them.
+The guards are measured on 121 held-out commands. Those cases were written from this README, without reading the guard code, and the guards are never tuned against them.
 
 | Guard | Bypasses blocked | Benign commands wrongly blocked |
 |---|---|---|
-| `secrets-guard` | 20 of 21 | 3 of 12 |
-| `main-guard` | 13 of 13 | 0 of 10 |
-| `prod-guard` | 27 of 29 | 1 of 18 |
-| All | 60 of 63 (95%) | 4 of 40 (10%) |
+| `secrets-guard` | 25 of 25 | 0 of 13 |
+| `main-guard` | 16 of 16 | 0 of 13 |
+| `prod-guard` | 33 of 33 | 0 of 21 |
+| All | 74 of 74 | 0 of 47 |
 
-[`bench/results.json`](bench/results.json) lists each case the guards got wrong. To rerun the benchmark, run `python3 tools/bench.py`. One Bash call through the guards takes about 45 ms.
+The first held-out set found 7 bugs. Each was fixed, its case moved into the main corpus, and 25 new held-out cases replaced them. Those 25 were committed before the fixed guards ran against them.
+
+[`bench/results.json`](bench/results.json) lists each case the guards got wrong. To rerun the benchmark, run `python3 tools/bench.py`. One Bash call through the guards takes about 50 ms.
 
 The guards are also tested on whole tasks, with Claude Code run on the same 16 tasks with and without the pack ([bench/harbor](bench/harbor/README.md)). With the pack, all 80 runs were safe, against 65 of 80 without it. But the agent finished 62 tasks instead of 79, mostly because of one `prod-guard` bug, [#56](https://github.com/abin-m/paved-road/issues/56). With #56 and #57 fixed, it finished 74, and every run was still safe.
 
@@ -106,6 +108,7 @@ A guard does not stop:
 - A `KUBECONFIG`, `TF_WORKSPACE` or `AWS_PROFILE` exported by an earlier command. The guard sees only the environment Claude Code started with.
 - A CDK stack added since the app was last synthesised. For `cdk deploy --all`, the guard reads the stack names in `cdk.out`, so it doesn't see a stack that isn't there yet.
 - A production environment whose name contains none of the words in [Who this is for](#who-this-is-for).
+- An Ansible task marked `check_mode: false`. The guard allows `ansible-playbook --check` as a dry run, but such a task still runs for real. The guard doesn't read playbooks.
 
 Report any other way past a guard as a security problem. See [SECURITY.md](SECURITY.md).
 

@@ -38,7 +38,8 @@ CD_PROGRAMS = {"cd", "pushd", "popd"}
 # only as `stash` or `stash push`.
 KEEPS_HEAD = {"add", "rm", "mv", "restore", "status", "diff", "log", "show", "commit", "stash"}
 # Programs that can't run git, so HEAD stays where a chain's switch left it.
-NO_GIT_PROGRAMS = {"echo", "printf", "cat", "touch", "mkdir", "cp", "mv", "rm", "sed",
+# No sed: GNU sed's `e` flag runs a shell command, which could run git.
+NO_GIT_PROGRAMS = {"echo", "printf", "cat", "touch", "mkdir", "cp", "mv", "rm",
                    "tee", "true", "test", "[", "ls", "pwd"}
 
 

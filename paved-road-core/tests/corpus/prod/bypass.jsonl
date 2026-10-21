@@ -106,3 +106,5 @@
 {"label": "time ansible ad-hoc in production", "bash": "time ansible all -i production -a reboot", "source": "fix-53"}
 {"label": "sudo -E env nohup ansible ad-hoc in production", "bash": "sudo -E env X=1 nohup ansible all -i production -a reboot", "source": "fix-53"}
 {"label": "timeout 60 ansible ad-hoc in production", "bash": "timeout 60 ansible all -i production -a reboot", "source": "fix-53"}
+{"label": "xargs runs ansible against production", "bash": "xargs ansible all -i production -a reboot", "source": "fix-53"}
+{"label": "watch runs ansible against production", "bash": "watch ansible all -i production -a reboot", "source": "fix-53"}

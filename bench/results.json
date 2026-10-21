@@ -3,35 +3,35 @@
   "dev": {
     "guards": {
       "secrets": {
-        "bypass_caught": 26,
-        "bypass_total": 31,
+        "bypass_caught": 38,
+        "bypass_total": 43,
         "benign_blocked": 0,
-        "benign_total": 22,
-        "recall": 0.839,
+        "benign_total": 29,
+        "recall": 0.884,
         "false_block_rate": 0.0
       },
       "main": {
-        "bypass_caught": 22,
-        "bypass_total": 22,
+        "bypass_caught": 38,
+        "bypass_total": 38,
         "benign_blocked": 0,
-        "benign_total": 13,
+        "benign_total": 22,
         "recall": 1.0,
         "false_block_rate": 0.0
       },
       "prod": {
-        "bypass_caught": 81,
-        "bypass_total": 81,
+        "bypass_caught": 110,
+        "bypass_total": 110,
         "benign_blocked": 0,
-        "benign_total": 70,
+        "benign_total": 87,
         "recall": 1.0,
         "false_block_rate": 0.0
       },
       "all": {
-        "bypass_caught": 129,
-        "bypass_total": 134,
+        "bypass_caught": 186,
+        "bypass_total": 191,
         "benign_blocked": 0,
-        "benign_total": 105,
-        "recall": 0.963,
+        "benign_total": 138,
+        "recall": 0.974,
         "false_block_rate": 0.0
       }
     }
@@ -39,80 +39,44 @@
   "heldout": {
     "guards": {
       "secrets": {
-        "bypass_caught": 20,
-        "bypass_total": 21,
-        "benign_blocked": 3,
-        "benign_total": 12,
-        "recall": 0.952,
-        "false_block_rate": 0.25
+        "bypass_caught": 25,
+        "bypass_total": 25,
+        "benign_blocked": 0,
+        "benign_total": 13,
+        "recall": 1.0,
+        "false_block_rate": 0.0
       },
       "main": {
-        "bypass_caught": 13,
-        "bypass_total": 13,
+        "bypass_caught": 16,
+        "bypass_total": 16,
         "benign_blocked": 0,
-        "benign_total": 10,
+        "benign_total": 13,
         "recall": 1.0,
         "false_block_rate": 0.0
       },
       "prod": {
-        "bypass_caught": 27,
-        "bypass_total": 29,
-        "benign_blocked": 1,
-        "benign_total": 18,
-        "recall": 0.931,
-        "false_block_rate": 0.056
+        "bypass_caught": 33,
+        "bypass_total": 33,
+        "benign_blocked": 0,
+        "benign_total": 21,
+        "recall": 1.0,
+        "false_block_rate": 0.0
       },
       "all": {
-        "bypass_caught": 60,
-        "bypass_total": 63,
-        "benign_blocked": 4,
-        "benign_total": 40,
-        "recall": 0.952,
-        "false_block_rate": 0.1
+        "bypass_caught": 74,
+        "bypass_total": 74,
+        "benign_blocked": 0,
+        "benign_total": 47,
+        "recall": 1.0,
+        "false_block_rate": 0.0
       }
     },
-    "wrong": [
-      {
-        "case": "heldout/secrets/bypass.jsonl:16",
-        "label": "diff .env against the example",
-        "kind": "bypass"
-      },
-      {
-        "case": "heldout/secrets/benign.jsonl:4",
-        "label": "read a public key",
-        "kind": "benign"
-      },
-      {
-        "case": "heldout/secrets/benign.jsonl:5",
-        "label": "cat a public key",
-        "kind": "benign"
-      },
-      {
-        "case": "heldout/secrets/benign.jsonl:6",
-        "label": "cat known_hosts",
-        "kind": "benign"
-      },
-      {
-        "case": "heldout/prod/bypass.jsonl:17",
-        "label": "ansible ad-hoc reboot in production",
-        "kind": "bypass"
-      },
-      {
-        "case": "heldout/prod/bypass.jsonl:21",
-        "label": "gcloud delete instance in prod project",
-        "kind": "bypass"
-      },
-      {
-        "case": "heldout/prod/benign.jsonl:15",
-        "label": "ansible-playbook --check production",
-        "kind": "benign"
-      }
-    ]
+    "wrong": []
   },
   "latency_ms": {
     "machine": "Darwin arm64, Python 3.14.6",
     "runs": 10,
-    "bash_call_p50": 43.0,
-    "bash_call_p95": 56.6
+    "bash_call_p50": 49.1,
+    "bash_call_p95": 58.3
   }
 }
