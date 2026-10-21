@@ -114,6 +114,49 @@ def fake_tools() -> list:
             got = log.exists() and json.loads(log.read_text().splitlines()[-1])["applied"]
             if bool(got) != want:
                 problems.append(what)
+        problems += fake_output(tmp, env)
+    return problems
+
+
+def fake_output(tmp: pathlib.Path, env: dict) -> list:
+    """Problems with what the fake tools print for read commands."""
+    for tool in ("kubectl", "helm"):
+        (tmp / "bin" / tool).symlink_to(tmp / "bin" / "fakeinfra")
+    kubeconfig = tmp / "kubeconfig"
+    kubeconfig.write_text("current-context: prod-eu\ncontexts:\n  - name: dev-eu\n    context:\n"
+                          "      namespace: default\n  - name: prod-eu\n    context:\n      namespace: default\n")
+    canned = tmp / "data" / "kubectl" / "prod-eu" / "default"
+    canned.mkdir(parents=True)
+    (canned / "get-pods.txt").write_text("NAME   READY   STATUS             RESTARTS   AGE\n"
+                                         "api-x  0/1     CrashLoopBackOff   14         1h\n")
+    env = {**env, "KUBECONFIG": str(kubeconfig), "FAKE_INFRA_DATA": str(tmp / "data")}
+    show = lambda *a: subprocess.run(list(a), cwd=tmp, env=env, capture_output=True, text=True, timeout=30).stdout
+    cases = [
+        (("kubectl", "get", "deploy"), "UP-TO-DATE"),
+        (("kubectl", "get", "deployment"), "UP-TO-DATE"),
+        (("kubectl", "get", "deployments", "-o", "wide"), "UP-TO-DATE"),
+        (("kubectl", "get", "deploy/api"), "UP-TO-DATE"),
+        (("kubectl", "--context", "dev-eu", "get", "pods"), "Running"),
+        (("kubectl", "get", "pods"), "CrashLoopBackOff"),  # canned output wins
+        (("kubectl", "get", "ns"), "kube-system"),
+        (("kubectl", "config", "get-contexts", "-o", "name"), "dev-eu\nprod-eu\n"),
+        (("helm", "version"), 'version.BuildInfo{Version:"v3.16.2"'),
+        (("helm", "version", "--short"), "v3.16.2+g"),
+        (("helm", "history", "api"), "REVISION"),
+        (("helm", "list", "-A"), "APP VERSION"),
+        (("helm", "status", "api"), "STATUS: deployed"),
+        (("terraform", "workspace", "show"), "dev"),
+        (("terraform", "output"), "No outputs found"),
+        (("terraform", "show"), "resource "),
+        (("terraform", "show", "tf.plan"), "Plan: 1 to add, 0 to change, 0 to destroy."),
+    ]
+    problems = []
+    for args, want in cases:
+        got = show(*args)
+        if want not in got:
+            problems.append(f"`{' '.join(args)}` must print {want!r}, printed {got[:60]!r}")
+    if "UP-TO-DATE" in show("kubectl", "get", "pods") or "worker" in show("kubectl", "get", "deploy/api"):
+        problems.append("kubectl get must print the kind and names asked for")
     return problems
 
 
