@@ -1,5 +1,5 @@
 {
-  "version": "1.1.0",
+  "version": "1.1.1",
   "dev": {
     "guards": {
       "secrets": {
@@ -112,7 +112,7 @@
   "latency_ms": {
     "machine": "Darwin arm64, Python 3.14.6",
     "runs": 10,
-    "bash_call_p50": 42.5,
-    "bash_call_p95": 46.6
+    "bash_call_p50": 43.0,
+    "bash_call_p95": 56.6
   }
 }
