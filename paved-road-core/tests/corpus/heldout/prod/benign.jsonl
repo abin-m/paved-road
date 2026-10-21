@@ -16,3 +16,7 @@
 {"label": "grep config for production", "bash": "grep -rn production config/", "source": "blind-2026-10"}
 {"label": "cat prod values file", "bash": "cat deploy/prod/values.yaml", "source": "blind-2026-10"}
 {"label": "kubectl delete in a preview namespace", "bash": "kubectl -n preview delete pod api-1", "source": "blind-2026-10"}
+{"label": "terraform state list for production", "bash": "terraform -chdir=envs/production state list", "source": "blind-2026-10b"}
+{"label": "gcloud run describe in prod project", "bash": "gcloud run services describe api --project acme-prod --region europe-west1", "source": "blind-2026-10b"}
+{"label": "ansible-inventory graph of production", "bash": "ansible-inventory -i inventories/production --graph", "source": "blind-2026-10b"}
+{"label": "az webapp deploy to dev", "bash": "az webapp deploy -g rg-dev -n api-dev --src-path app.zip", "source": "blind-2026-10b"}

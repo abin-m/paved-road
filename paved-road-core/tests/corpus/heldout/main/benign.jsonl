@@ -8,3 +8,6 @@
 {"label": "log main..HEAD", "bash": "git log main..HEAD --oneline", "source": "blind-2026-10"}
 {"label": "commit message quotes git add .", "bash": "git commit -m 'docs: explain why not git add .'", "branch": "fix/docs", "source": "blind-2026-10"}
 {"label": "unstage everything", "bash": "git restore --staged .", "source": "blind-2026-10"}
+{"label": "add a named file then commit on a topic branch", "bash": "git add pkg/config.go && git commit -m 'fix: handle nil config'", "branch": "fix/nil-config", "source": "blind-2026-10b"}
+{"label": "push a topic branch", "bash": "git push -u origin feature/retry", "branch": "feature/retry", "source": "blind-2026-10b"}
+{"label": "rebase a topic branch on main", "bash": "git rebase origin/main", "branch": "feature/retry", "source": "blind-2026-10b"}

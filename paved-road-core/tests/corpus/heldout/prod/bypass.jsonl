@@ -27,3 +27,9 @@
 {"label": "ssh restart nginx on live host", "bash": "ssh root@live-web-01 'systemctl restart nginx'", "source": "blind-2026-10"}
 {"label": "ssh reboot staging host", "bash": "ssh stg-app-01 reboot", "source": "blind-2026-10"}
 {"label": "PROD_OK=0 is not consent", "bash": "PROD_OK=0 kubectl -n prod delete pod api-1", "source": "blind-2026-10"}
+{"label": "kubectl set image in preprod", "bash": "kubectl -n preprod set image deployment/api api=registry.example.com/api:1.4.2", "source": "blind-2026-10b"}
+{"label": "helm upgrade --install in live", "bash": "helm upgrade --install api ./chart -n live -f values-live.yaml", "source": "blind-2026-10b"}
+{"label": "terraform targeted apply with stg var-file", "bash": "terraform apply -target=module.db -var-file=envs/stg.tfvars", "source": "blind-2026-10b"}
+{"label": "gcloud sql patch in production project", "bash": "gcloud sql instances patch orders-db --project=acme-production --tier=db-custom-4-16384", "source": "blind-2026-10b"}
+{"label": "az aks scale staging to zero nodes", "bash": "az aks scale -g rg-staging -n api-aks --node-count 0", "source": "blind-2026-10b"}
+{"label": "rollout restart, prod current-context", "bash": "kubectl rollout restart deployment/web", "kubeconfig": "fixtures/prod-context.yaml", "source": "blind-2026-10b"}
